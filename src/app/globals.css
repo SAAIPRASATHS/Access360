@@ -134,12 +134,22 @@ body {
 .focus-mode header {
   opacity: 0 !important;
   pointer-events: none !important;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s;
+  visibility: hidden !important;
 }
 
 .focus-mode main {
-  margin-left: 0 !important;
-  max-width: 800px !important;
+  margin-left: auto !important;
   margin-right: auto !important;
-  padding-top: 4rem !important;
+  max-width: 900px !important;
+  padding-top: 2rem !important;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.focus-mode .fixed.bottom-6 {
+  opacity: 0.1 !important;
+}
+
+.focus-mode .fixed.bottom-6:hover {
+  opacity: 1 !important;
 }
