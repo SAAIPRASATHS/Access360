@@ -2,9 +2,10 @@ import { db } from '../firebase';
 
 export interface UserPreferences {
     highContrast: boolean;
-    largeFont: boolean;
+    fontSize: 'small' | 'medium' | 'large' | 'xl';
     dyslexiaFont: boolean;
     focusMode: boolean;
+    speechEnabled: boolean;
     language: 'en' | 'ta' | 'hi';
 }
 

@@ -23,25 +23,13 @@ export async function POST(req: Request) {
         }
 
         // Map the flat prefs from frontend to the UserPreferences structure
-        const accessibilityPreferences = {
-            ...user.accessibilityPreferences,
-            ...prefs,
-            // Map fontSize 'large' to largeFont boolean if needed, 
-            // but let's stick to the existing structure if possible or update it.
-            // Based on lib/services/user.ts:
-            // largeFont: prefs.fontSize === 'large',
-            // highContrast: prefs.highContrast,
-            // dyslexiaFont: prefs.dyslexiaFont,
-            // etc.
-        };
-
-        // We need to be careful with normalization here
         const normalizedPrefs = {
-            highContrast: prefs.highContrast ?? user.accessibilityPreferences.highContrast,
-            largeFont: prefs.fontSize === 'large',
-            dyslexiaFont: prefs.dyslexiaFont ?? user.accessibilityPreferences.dyslexiaFont,
-            focusMode: prefs.focusMode ?? user.accessibilityPreferences.focusMode,
-            language: prefs.language ?? user.accessibilityPreferences.language,
+            highContrast: prefs.highContrast ?? user.accessibilityPreferences?.highContrast ?? false,
+            fontSize: prefs.fontSize ?? user.accessibilityPreferences?.fontSize ?? 'medium',
+            dyslexiaFont: prefs.dyslexiaFont ?? user.accessibilityPreferences?.dyslexiaFont ?? false,
+            focusMode: prefs.focusMode ?? user.accessibilityPreferences?.focusMode ?? false,
+            speechEnabled: prefs.speechEnabled ?? user.accessibilityPreferences?.speechEnabled ?? false,
+            language: prefs.language ?? user.accessibilityPreferences?.language ?? 'en',
         };
 
         await userService.updateUser(user.id, {

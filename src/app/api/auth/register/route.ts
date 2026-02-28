@@ -27,9 +27,10 @@ export async function POST(req: Request) {
             role: isAdmin ? 'admin' : 'student',
             accessibilityPreferences: {
                 highContrast: false,
-                largeFont: false,
+                fontSize: 'medium',
                 dyslexiaFont: false,
                 focusMode: false,
+                speechEnabled: false,
                 language: 'en',
             },
         });

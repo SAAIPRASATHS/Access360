@@ -9,25 +9,21 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+
 export default function AccessibilityToolbar() {
-    const [pref, setPref] = useState({
-        highContrast: false,
-        largeFont: false,
-        dyslexiaFont: false,
-        focusMode: false,
-        speechEnabled: false,
-        language: 'en'
-    });
+    const {
+        highContrast,
+        fontSize,
+        dyslexiaFont,
+        focusMode,
+        speechEnabled,
+        updatePreferences
+    } = useAccessibility();
 
     useEffect(() => {
-        const body = document.body;
-        body.classList.toggle('high-contrast', pref.highContrast);
-        body.classList.toggle('large-font', pref.largeFont);
-        body.classList.toggle('dyslexia-font', pref.dyslexiaFont);
-        body.classList.toggle('focus-mode', pref.focusMode);
-
         const handleHover = (e: MouseEvent) => {
-            if (!pref.speechEnabled) return;
+            if (!speechEnabled) return;
             const target = e.target as HTMLElement;
             const text = target.innerText || target.getAttribute('aria-label') || target.getAttribute('placeholder');
             if (text && text.length < 200) {
@@ -38,7 +34,7 @@ export default function AccessibilityToolbar() {
             }
         };
 
-        if (pref.speechEnabled) {
+        if (speechEnabled) {
             document.addEventListener('mouseover', handleHover);
         }
 
@@ -46,62 +42,92 @@ export default function AccessibilityToolbar() {
             document.removeEventListener('mouseover', handleHover);
             window.speechSynthesis.cancel();
         };
-    }, [pref]);
-
-    const toggle = (key: keyof typeof pref) => {
-        setPref(prev => ({ ...prev, [key]: !prev[key] }));
-    };
+    }, [speechEnabled]);
 
     const handleSpeech = () => {
-        if (!pref.speechEnabled) {
+        if (!speechEnabled) {
             const utterance = new window.SpeechSynthesisUtterance("Speech support enabled. Hover over elements to hear them.");
             window.speechSynthesis.speak(utterance);
         }
-        toggle('speechEnabled');
+        updatePreferences({ speechEnabled: !speechEnabled });
     };
 
     return (
         <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 group z-50">
-            <div className="flex flex-col gap-2 scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 origin-bottom bg-white p-3 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 mb-2 w-56">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Accessibility Tools</p>
+            <div className="flex flex-col gap-2 scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 origin-bottom bg-white/90 backdrop-blur-xl p-4 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-white/20 mb-2 w-64 translate-y-4 group-hover:translate-y-0">
+                <div className="flex items-center justify-between px-4 mb-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Accessibility</p>
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                </div>
+
                 <button
-                    onClick={() => toggle('highContrast')}
-                    className={cn("p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 hover:bg-slate-50", pref.highContrast && "bg-indigo-50 text-indigo-600 font-bold")}
+                    onClick={() => updatePreferences({ highContrast: !highContrast })}
+                    className={cn(
+                        "p-3.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent",
+                        highContrast
+                            ? "bg-slate-900 text-yellow-400 border-yellow-400 shadow-lg shadow-yellow-400/10"
+                            : "hover:bg-slate-50 text-slate-600"
+                    )}
                 >
-                    <Contrast className="w-5 h-5" />
-                    <span className="text-sm">High Contrast</span>
+                    <Contrast className={cn("w-5 h-5", highContrast && "animate-pulse")} />
+                    <span className="text-sm font-bold tracking-tight">High Contrast</span>
                 </button>
+
                 <button
-                    onClick={() => toggle('largeFont')}
-                    className={cn("p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 hover:bg-slate-50", pref.largeFont && "bg-indigo-50 text-indigo-600 font-bold")}
+                    onClick={() => updatePreferences({ fontSize: fontSize === 'xl' ? 'medium' : fontSize === 'large' ? 'xl' : 'large' })}
+                    className={cn(
+                        "p-3.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent",
+                        (fontSize === 'large' || fontSize === 'xl')
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                            : "hover:bg-slate-50 text-slate-600"
+                    )}
                 >
                     <Type className="w-5 h-5" />
-                    <span className="text-sm">Large Font</span>
+                    <span className="text-sm font-bold tracking-tight">FontSize: {fontSize.toUpperCase()}</span>
                 </button>
+
                 <button
-                    onClick={() => toggle('dyslexiaFont')}
-                    className={cn("p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 hover:bg-slate-50", pref.dyslexiaFont && "bg-indigo-50 text-indigo-600 font-bold")}
+                    onClick={() => updatePreferences({ dyslexiaFont: !dyslexiaFont })}
+                    className={cn(
+                        "p-3.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent",
+                        dyslexiaFont
+                            ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                            : "hover:bg-slate-50 text-slate-600"
+                    )}
                 >
                     <Eye className="w-5 h-5" />
-                    <span className="text-sm">Dyslexia Font</span>
+                    <span className="text-sm font-bold tracking-tight font-sans">Dyslexia Font</span>
                 </button>
+
                 <button
-                    onClick={() => toggle('focusMode')}
-                    className={cn("p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 hover:bg-slate-50", pref.focusMode && "bg-emerald-50 text-emerald-600 font-bold")}
+                    onClick={() => updatePreferences({ focusMode: !focusMode })}
+                    className={cn(
+                        "p-3.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent",
+                        focusMode
+                            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+                            : "hover:bg-slate-50 text-slate-600"
+                    )}
                 >
                     <Layout className="w-5 h-5" />
-                    <span className="text-sm">Focus Mode</span>
+                    <span className="text-sm font-bold tracking-tight">Focus Mode</span>
                 </button>
+
                 <button
                     onClick={handleSpeech}
-                    className={cn("p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 hover:bg-slate-50", pref.speechEnabled && "bg-rose-50 text-rose-600 font-bold")}
+                    className={cn(
+                        "p-3.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent",
+                        speechEnabled
+                            ? "bg-rose-600 text-white shadow-lg shadow-rose-600/20"
+                            : "hover:bg-slate-50 text-slate-600"
+                    )}
                 >
-                    <Volume2 className="w-5 h-5" />
-                    <span className="text-sm">Speech (TTS)</span>
+                    <Volume2 className={cn("w-5 h-5", speechEnabled && "animate-bounce")} />
+                    <span className="text-sm font-bold tracking-tight">Speech (TTS)</span>
                 </button>
             </div>
-            <button className="bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition active:scale-95">
-                <Settings className="w-6 h-6 animate-[spin_4s_linear_infinite]" />
+
+            <button className="bg-gradient-to-br from-indigo-600 to-indigo-700 text-white p-5 rounded-[2rem] shadow-2xl hover:shadow-indigo-500/40 transition-all active:scale-95 group-hover:rotate-12">
+                <Settings className="w-7 h-7" />
             </button>
         </div>
     );
