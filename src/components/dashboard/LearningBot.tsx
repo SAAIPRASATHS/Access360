@@ -60,14 +60,23 @@ export default function LearningBot() {
         const msg = messages[index];
         if (!msg || msg.role !== 'ai') return;
 
+        // If already translated and original exists, toggle back
+        if (msg.originalContent) {
+            const updated = [...messages];
+            updated[index] = { ...msg, content: msg.originalContent, originalContent: undefined };
+            setMessages(updated);
+            return;
+        }
+
         setLoading(true);
         try {
+            const targetLang = language === 'ta' ? 'Tamil' : language === 'hi' ? 'Hindi' : 'English';
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Translate the following text to ${language === 'ta' ? 'Tamil' : language === 'hi' ? 'Hindi' : 'English'}: ${msg.content}`,
-                    mode: 'normal',
+                    prompt: `Translate this text to ${targetLang}:\n\n${msg.content}`,
+                    type: 'translate',
                 }),
             });
             const data = await res.json();
@@ -176,10 +185,12 @@ export default function LearningBot() {
                                 {msg.role === 'ai' && (
                                     <button
                                         onClick={() => translateMessage(i)}
-                                        className="absolute -right-8 bottom-0 p-1.5 text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"
-                                        title={dictionary.bot.translate}
+                                        className={`absolute -right-8 bottom-0 p-1.5 transition-all ${msg.originalContent
+                                            ? 'text-indigo-600 opacity-100 scale-110'
+                                            : 'text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100'}`}
+                                        title={msg.originalContent ? "Show Original" : dictionary.bot.translate}
                                     >
-                                        <LanguageIcon className="w-3.5 h-3.5" />
+                                        <LanguageIcon className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
