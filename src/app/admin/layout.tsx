@@ -1,4 +1,6 @@
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import AccessibilityToolbar from '@/components/accessibility/AccessibilityToolbar';
+import LearningBot from '@/components/dashboard/LearningBot';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Bell } from 'lucide-react';
@@ -42,6 +44,8 @@ export default async function AdminLayout({
                     {children}
                 </div>
             </main>
+            <AccessibilityToolbar />
+            <LearningBot />
         </div>
     );
 }
