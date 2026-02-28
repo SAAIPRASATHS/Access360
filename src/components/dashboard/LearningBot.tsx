@@ -1,26 +1,29 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, MessageCircle, X, GraduationCap, Lightbulb, BookOpen } from 'lucide-react';
+import { Send, Sparkles, Loader2, MessageCircle, X, GraduationCap, Lightbulb, BookOpen, Languages as LanguageIcon } from 'lucide-react';
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
 
 interface Message {
     role: 'user' | 'ai';
     content: string;
+    originalContent?: string;
 }
 
-const SUGGESTED_QUESTIONS = [
-    { icon: GraduationCap, text: 'Explain photosynthesis simply' },
-    { icon: Lightbulb, text: 'Tips for better study habits' },
-    { icon: BookOpen, text: 'Summarize the water cycle' },
-];
-
 export default function LearningBot() {
+    const { dictionary, language } = useAccessibility();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'normal' | 'ELI10' | 'bullet'>('normal');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const suggestQuestions = [
+        { icon: GraduationCap, text: dictionary.bot.suggestions.photosynthesis },
+        { icon: Lightbulb, text: dictionary.bot.suggestions.study },
+        { icon: BookOpen, text: dictionary.bot.suggestions.water },
+    ];
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,7 +33,7 @@ export default function LearningBot() {
         const messageText = text || input.trim();
         if (!messageText) return;
 
-        setMessages((prev) => [...prev, { role: 'user', content: messageText }]);
+        setMessages((prev: Message[]) => [...prev, { role: 'user', content: messageText }]);
         setInput('');
         setLoading(true);
 
@@ -41,12 +44,40 @@ export default function LearningBot() {
                 body: JSON.stringify({
                     prompt: messageText,
                     mode,
+                    language: language === 'ta' ? 'Tamil' : language === 'hi' ? 'Hindi' : 'English',
                 }),
             });
             const data = await res.json();
-            setMessages((prev) => [...prev, { role: 'ai', content: data.response || data.error || 'No response' }]);
+            setMessages((prev: Message[]) => [...prev, { role: 'ai', content: data.response || data.error || 'No response' }]);
         } catch {
-            setMessages((prev) => [...prev, { role: 'ai', content: 'Sorry, something went wrong. Please try again.' }]);
+            setMessages((prev: Message[]) => [...prev, { role: 'ai', content: dictionary.bot.placeholder }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const translateMessage = async (index: number) => {
+        const msg = messages[index];
+        if (!msg || msg.role !== 'ai') return;
+
+        setLoading(true);
+        try {
+            const res = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Translate the following text to ${language === 'ta' ? 'Tamil' : language === 'hi' ? 'Hindi' : 'English'}: ${msg.content}`,
+                    mode: 'normal',
+                }),
+            });
+            const data = await res.json();
+            if (data.response) {
+                const updated = [...messages];
+                updated[index] = { ...msg, content: data.response, originalContent: msg.content };
+                setMessages(updated);
+            }
+        } catch (err) {
+            console.error('Translation failed:', err);
         } finally {
             setLoading(false);
         }
@@ -58,8 +89,8 @@ export default function LearningBot() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${isOpen
-                        ? 'bg-slate-800 rotate-0 scale-90'
-                        : 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:shadow-indigo-300/50 hover:scale-110'
+                    ? 'bg-slate-800 rotate-0 scale-90'
+                    : 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:shadow-indigo-300/50 hover:scale-110'
                     }`}
                 aria-label={isOpen ? 'Close chat' : 'Open learning bot'}
             >
@@ -87,8 +118,8 @@ export default function LearningBot() {
                             <Sparkles className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-base font-outfit">Learning Bot</h2>
-                            <p className="text-indigo-200 text-xs">Ask any doubt, anytime</p>
+                            <h2 className="font-bold text-base font-outfit">{dictionary.bot.title}</h2>
+                            <p className="text-indigo-200 text-xs">{dictionary.bot.subtitle}</p>
                         </div>
                     </div>
                     <div className="flex gap-1 bg-indigo-800/40 p-1 rounded-lg">
@@ -97,29 +128,29 @@ export default function LearningBot() {
                                 key={m}
                                 onClick={() => setMode(m)}
                                 className={`px-2.5 py-1 text-[10px] rounded-md font-bold transition-all ${mode === m
-                                        ? 'bg-white text-indigo-700 shadow-sm'
-                                        : 'text-indigo-200 hover:bg-white/10'
+                                    ? 'bg-white text-indigo-700 shadow-sm'
+                                    : 'text-indigo-200 hover:bg-white/10'
                                     }`}
                             >
-                                {m === 'ELI10' ? 'Simple' : m === 'bullet' ? 'Bullets' : 'Normal'}
+                                {m === 'ELI10' ? dictionary.bot.modes.simple : m === 'bullet' ? dictionary.bot.modes.bullets : dictionary.bot.modes.normal}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/80 min-h-[300px] max-h-[400px]">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/80 min-h-[300px] max-h-[400px]">
                     {messages.length === 0 && (
                         <div className="text-center py-6">
                             <div className="bg-indigo-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3">
                                 <GraduationCap className="w-7 h-7 text-indigo-500" />
                             </div>
-                            <h3 className="font-bold text-slate-800 text-sm">Ask me anything!</h3>
+                            <h3 className="font-bold text-slate-800 text-sm">{dictionary.bot.emptyTitle}</h3>
                             <p className="text-slate-400 text-xs max-w-[250px] mx-auto mt-1">
-                                I can help explain concepts, summarize topics, or answer your study questions.
+                                {dictionary.bot.emptyDesc}
                             </p>
                             <div className="mt-4 space-y-2">
-                                {SUGGESTED_QUESTIONS.map((q, i) => (
+                                {suggestQuestions.map((q, i) => (
                                     <button
                                         key={i}
                                         onClick={() => sendMessage(q.text)}
@@ -134,14 +165,23 @@ export default function LearningBot() {
                     )}
 
                     {messages.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                             <div
-                                className={`max-w-[85%] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                                        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
-                                        : 'bg-white text-slate-700 border border-slate-200 rounded-2xl rounded-tl-sm shadow-sm'
+                                className={`max-w-[85%] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap relative group ${msg.role === 'user'
+                                    ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                                    : 'bg-white text-slate-700 border border-slate-200 rounded-2xl rounded-tl-sm shadow-sm'
                                     }`}
                             >
                                 {msg.content}
+                                {msg.role === 'ai' && (
+                                    <button
+                                        onClick={() => translateMessage(i)}
+                                        className="absolute -right-8 bottom-0 p-1.5 text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"
+                                        title={dictionary.bot.translate}
+                                    >
+                                        <LanguageIcon className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -150,7 +190,7 @@ export default function LearningBot() {
                         <div className="flex justify-start">
                             <div className="bg-white px-4 py-2.5 rounded-2xl rounded-tl-sm border border-slate-200 shadow-sm flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
-                                <span className="text-slate-400 text-xs">Thinking...</span>
+                                <span className="text-slate-400 text-xs">{dictionary.bot.thinking}</span>
                             </div>
                         </div>
                     )}
@@ -164,7 +204,7 @@ export default function LearningBot() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                        placeholder="Ask your doubt..."
+                        placeholder={dictionary.bot.placeholder}
                         className="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 transition outline-none"
                     />
                     <button

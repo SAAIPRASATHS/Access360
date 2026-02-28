@@ -24,7 +24,7 @@ const PRIORITY_CONFIG = {
 
 export default function StudentDashboard() {
     const { data: session } = useSession();
-    const { dictionary } = useAccessibility();
+    const { dictionary, language } = useAccessibility();
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [dismissed, setDismissed] = useState<string[]>([]);
 
@@ -82,7 +82,7 @@ export default function StudentDashboard() {
         },
     ];
 
-    const firstName = session?.user?.name?.split(' ')[0] || 'there';
+    const firstName = session?.user?.name?.split(' ')[0] || (language === 'ta' ? 'அன்பரே' : language === 'hi' ? 'नमस्ते' : 'there');
     const hour = new Date().getHours();
     const greeting = dictionary.dashboard.greeting;
 
@@ -184,8 +184,8 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-3 gap-6">
                 {[
                     { label: dictionary.common.crisis, value: '0', icon: ShieldAlert, color: 'text-red-500', bg: 'bg-red-50' },
-                    { label: 'AI Sessions', value: '12', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                    { label: 'Mood Streak', value: '7d', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: language === 'ta' ? 'AI அமர்வுகள்' : language === 'hi' ? 'AI सत्र' : 'AI Sessions', value: '12', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                    { label: language === 'ta' ? 'மனநிலை தொடர்' : language === 'hi' ? 'मूड स्ट्रैक' : 'Mood Streak', value: '7d', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 ].map((stat) => {
                     const Icon = stat.icon;
                     return (
@@ -210,7 +210,7 @@ export default function StudentDashboard() {
                 <div className="relative z-10 max-w-2xl">
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-indigo-200 text-xs font-black uppercase tracking-widest mb-6 border border-white/10">
                         <Sparkles className="w-3 h-3" />
-                        Daily Inspiration
+                        {language === 'ta' ? 'தினசரி உத்வேகம்' : language === 'hi' ? 'दैनिक प्रेरणा' : 'Daily Inspiration'}
                     </div>
                     <h3 className="text-3xl font-bold font-outfit mb-4 leading-tight">
                         {dictionary.dashboard.inspiration}

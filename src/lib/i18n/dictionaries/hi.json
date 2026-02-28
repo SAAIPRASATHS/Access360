@@ -1,14 +1,15 @@
 {
     "common": {
         "dashboard": "डैशबोर्ड",
-        "learning": "लर्निंग और AI",
-        "crisis": "संकट बुद्धिमत्ता",
-        "wellbeing": "कल्याण",
+        "learning": "लर्निंग हब",
+        "crisis": "संकट इंटेलिजेंस",
+        "wellbeing": "स्व-देखभाल हब",
         "settings": "सेटिंग्स",
         "signout": "साइन आउट",
         "admin": "प्रशासक",
         "student": "छात्र",
-        "overview": "अवलोकन"
+        "overview": "अवलोकन",
+        "guest": "अतिथि उपयोगकर्ता"
     },
     "sidebar": {
         "navigation": "नेविगेशन",
@@ -18,7 +19,39 @@
         "incidents": "घटना रिपोर्ट",
         "sos": "SOS अलर्ट",
         "announcements": "घोषणाएँ",
-        "users": "उपयोगकर्ता प्रबंधन"
+        "users": "उपयोगकर्ता प्रबंधन",
+        "activity": "गतिविधि मॉनिटर",
+        "adminIntelligence": "प्रशासक बुद्धिमत्ता",
+        "studentExperience": "छात्र अनुभव"
+    },
+    "bot": {
+        "title": "लर्निंग बॉट",
+        "subtitle": "कोई भी संदेह, कभी भी पूछें",
+        "placeholder": "अपना संदेह पूछें...",
+        "thinking": "सोच रहा है...",
+        "emptyTitle": "मुझसे कुछ भी पूछें!",
+        "emptyDesc": "मैं अवधारणाओं को समझाने, विषयों को संक्षेप में प्रस्तुत करने या आपके अध्ययन के प्रश्नों का उत्तर देने में मदद कर सकता हूँ।",
+        "translate": "जवाब का अनुवाद करें",
+        "modes": {
+            "normal": "सामान्य",
+            "simple": "सरल",
+            "bullets": "बुलेट्स"
+        },
+        "suggestions": {
+            "photosynthesis": "प्रकाश संश्लेषण को सरलता से समझाएं",
+            "study": "बेहतर अध्ययन की आदतों के लिए सुझाव",
+            "water": "जल चक्र का सारांश दें"
+        }
+    },
+    "analytics": {
+        "wellbeingTrend": "कल्याण प्रवृत्ति (7 दिन)",
+        "crisisFreq": "संकट आवृत्ति",
+        "usage": "एक्सेसिबिलिटी मोड उपयोग",
+        "recentActivity": "हालिया छात्र गतिविधि",
+        "recentIncidents": "हालिया घटना रिपोर्ट",
+        "noIncidents": "कोई हालिया घटना की सूचना नहीं",
+        "noRegistrations": "कोई हालिया पंजीकरण नहीं मिला",
+        "liveAlerts": "लाइव अलर्ट"
     },
     "dashboard": {
         "greeting": "शुभ संध्या",

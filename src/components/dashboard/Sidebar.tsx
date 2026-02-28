@@ -60,7 +60,7 @@ function SidebarContent({ userRole = 'student' }: { userRole?: string }) {
                     <div>
                         <span className="font-bold text-xl font-outfit text-white tracking-tight block leading-none">Access360</span>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mt-1 block">
-                            {userRole === 'admin' ? 'Admin Intelligence' : 'Student Experience'}
+                            {userRole === 'admin' ? dictionary.sidebar.adminIntelligence : dictionary.sidebar.studentExperience}
                         </span>
                     </div>
                 </div>
@@ -71,8 +71,10 @@ function SidebarContent({ userRole = 'student' }: { userRole?: string }) {
                         {session?.user?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate leading-tight">{session?.user?.name || 'Guest User'}</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mt-0.5">{userRole}</p>
+                        <p className="text-sm font-bold text-white truncate leading-tight">{session?.user?.name || dictionary.common.guest}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mt-0.5">
+                            {userRole === 'admin' ? dictionary.common.admin : dictionary.common.student}
+                        </p>
                     </div>
                 </div>
 

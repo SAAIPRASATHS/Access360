@@ -8,6 +8,8 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -19,6 +21,7 @@ interface Props {
 const COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#10b981'];
 
 export default function AnalyticsCharts({ data }: Props) {
+    const { dictionary } = useAccessibility();
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
@@ -29,7 +32,7 @@ export default function AnalyticsCharts({ data }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Mood Trends */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">Wellbeing Trend (7 Days)</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">{dictionary.analytics.wellbeingTrend}</h3>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data?.moodTrends || []}>
@@ -47,7 +50,7 @@ export default function AnalyticsCharts({ data }: Props) {
 
             {/* Crisis Frequency */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">Crisis Frequency</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">{dictionary.analytics.crisisFreq}</h3>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data?.crisisFrequency || []}>
@@ -63,7 +66,7 @@ export default function AnalyticsCharts({ data }: Props) {
 
             {/* Accessibility Preferences */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm lg:col-span-2">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit text-center">Accessibility Mode Usage</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit text-center">{dictionary.analytics.usage}</h3>
                 <div className="h-64 w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -85,7 +88,7 @@ export default function AnalyticsCharts({ data }: Props) {
             </div>
             {/* Recent Students */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm lg:col-span-2">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">Recent Student Activity</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-outfit">{dictionary.analytics.recentActivity}</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -112,7 +115,7 @@ export default function AnalyticsCharts({ data }: Props) {
                                 </tr>
                             )) || (
                                     <tr>
-                                        <td colSpan={4} className="py-8 text-center text-slate-400 italic">No recent registrations found</td>
+                                        <td colSpan={4} className="py-8 text-center text-slate-400 italic">{dictionary.analytics.noRegistrations}</td>
                                     </tr>
                                 )}
                         </tbody>
@@ -123,8 +126,8 @@ export default function AnalyticsCharts({ data }: Props) {
             {/* Recent Incidents */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm lg:col-span-2">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-slate-800 font-outfit">Recent Incident Reports</h3>
-                    <span className="bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Live Alerts</span>
+                    <h3 className="text-lg font-bold text-slate-800 font-outfit">{dictionary.analytics.recentIncidents}</h3>
+                    <span className="bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{dictionary.analytics.liveAlerts}</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -166,7 +169,7 @@ export default function AnalyticsCharts({ data }: Props) {
                                 </tr>
                             )) || (
                                     <tr>
-                                        <td colSpan={4} className="py-8 text-center text-slate-400 italic">No recent incidents reported</td>
+                                        <td colSpan={4} className="py-8 text-center text-slate-400 italic">{dictionary.analytics.noIncidents}</td>
                                     </tr>
                                 )}
                         </tbody>

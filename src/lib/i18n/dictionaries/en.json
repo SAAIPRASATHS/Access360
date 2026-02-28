@@ -1,14 +1,15 @@
 {
     "common": {
         "dashboard": "Dashboard",
-        "learning": "Learning & AI",
+        "learning": "Learning Hub",
         "crisis": "Crisis Intelligence",
-        "wellbeing": "Wellbeing",
+        "wellbeing": "Self-Care Hub",
         "settings": "Settings",
         "signout": "Sign Out",
         "admin": "Admin",
         "student": "Student",
-        "overview": "Overview"
+        "overview": "Overview",
+        "guest": "Guest User"
     },
     "sidebar": {
         "navigation": "Navigation",
@@ -18,7 +19,39 @@
         "incidents": "Incident Reports",
         "sos": "SOS Alerts",
         "announcements": "Announcements",
-        "users": "User Management"
+        "users": "User Management",
+        "activity": "Activity Monitor",
+        "adminIntelligence": "Admin Intelligence",
+        "studentExperience": "Student Experience"
+    },
+    "bot": {
+        "title": "Learning Bot",
+        "subtitle": "Ask any doubt, anytime",
+        "placeholder": "Ask your doubt...",
+        "thinking": "Thinking...",
+        "emptyTitle": "Ask me anything!",
+        "emptyDesc": "I can help explain concepts, summarize topics, or answer your study questions.",
+        "translate": "Translate response",
+        "modes": {
+            "normal": "Normal",
+            "simple": "Simple",
+            "bullets": "Bullets"
+        },
+        "suggestions": {
+            "photosynthesis": "Explain photosynthesis simply",
+            "study": "Tips for better study habits",
+            "water": "Summarize the water cycle"
+        }
+    },
+    "analytics": {
+        "wellbeingTrend": "Wellbeing Trend (7 Days)",
+        "crisisFreq": "Crisis Frequency",
+        "usage": "Accessibility Mode Usage",
+        "recentActivity": "Recent Student Activity",
+        "recentIncidents": "Recent Incident Reports",
+        "noIncidents": "No recent incidents reported",
+        "noRegistrations": "No recent registrations found",
+        "liveAlerts": "Live Alerts"
     },
     "dashboard": {
         "greeting": "Good evening",
