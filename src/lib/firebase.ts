@@ -12,7 +12,9 @@ const getPrivateKey = () => {
 
     // Ensure the key has the correct header/footer
     if (!key.includes('-----BEGIN PRIVATE KEY-----')) {
-        console.warn('[Firebase Admin] Warning: Private key header missing.');
+        console.warn('[Firebase Admin] Warning: Private key header missing. Key length:', key.length);
+    } else {
+        console.log('[Firebase Admin] Private key format check: HEADER FOUND. Length:', key.length);
     }
 
     return key;
