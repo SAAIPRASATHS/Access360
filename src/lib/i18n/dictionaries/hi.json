@@ -1,0 +1,42 @@
+{
+    "common": {
+        "dashboard": "डैशबोर्ड",
+        "learning": "लर्निंग और AI",
+        "crisis": "संकट बुद्धिमत्ता",
+        "wellbeing": "कल्याण",
+        "settings": "सेटिंग्स",
+        "signout": "साइन आउट",
+        "admin": "प्रशासक",
+        "student": "छात्र",
+        "overview": "अवलोकन"
+    },
+    "sidebar": {
+        "navigation": "नेविगेशन",
+        "hub": "मेरा हब",
+        "adminHub": "सिस्टम हब",
+        "exitToStudent": "छात्र पोर्टल पर जाएं",
+        "incidents": "घटना रिपोर्ट",
+        "sos": "SOS अलर्ट",
+        "announcements": "घोषणाएँ",
+        "users": "उपयोगकर्ता प्रबंधन"
+    },
+    "dashboard": {
+        "greeting": "शुभ संध्या",
+        "search": "आज Access360 आपकी कैसे सहायता कर सकता है?",
+        "allSystems": "सभी सिस्टम ऑनलाइन हैं",
+        "inspiration": "एक्सेसिबिलिटी एक फीचर नहीं है - यह एक मौलिक अधिकार है।",
+        "inspirationSub": "Access360 आपको कैंपस जीवन को आत्मविश्वास और आसानी से नेविगेट करने में मदद करने के लिए यहाँ है।",
+        "chatWellbeing": "कल्याण AI के साथ चैट करें",
+        "newFeatures": "नई सुविधाएँ उपलब्ध हैं",
+        "realtimeUpdates": "रीयल-टाइम अपडेट",
+        "dailyCheckin": "दैनिक चेक-इन उपलब्ध है"
+    },
+    "accessibility": {
+        "title": "एक्सेसिबिलिटी",
+        "highContrast": "हाई कंट्रास्ट",
+        "fontSize": "फ़ॉन्ट आकार",
+        "dyslexiaFont": "डिस्लेक्सिया फ़ॉन्ट",
+        "focusMode": "फोकस मोड",
+        "speech": "स्पीच (TTS)"
+    }
+}

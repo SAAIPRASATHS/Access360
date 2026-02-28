@@ -16,6 +16,8 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -35,13 +37,14 @@ function SidebarContent({ userRole = 'student' }: { userRole?: string }) {
     const searchParams = useSearchParams();
     const roleParam = searchParams.get('role');
     const { data: session } = useSession();
+    const { dictionary } = useAccessibility();
 
     const allLinks = [
-        { name: 'System Hub', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
-        { name: 'My Hub', href: '/dashboard', icon: Home, roles: ['student'] },
-        { name: 'Learning & AI', href: '/dashboard/accessibility', icon: Brain, roles: ['student', 'admin'] },
-        { name: 'Crisis Intelligence', href: '/dashboard/crisis', icon: ShieldAlert, roles: ['student', 'admin'] },
-        { name: 'Wellbeing', href: '/dashboard/wellbeing', icon: HeartPulse, roles: ['student', 'admin'] },
+        { name: dictionary.sidebar.adminHub, href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
+        { name: dictionary.sidebar.hub, href: '/dashboard', icon: Home, roles: ['student'] },
+        { name: dictionary.common.learning, href: '/dashboard/accessibility', icon: Brain, roles: ['student', 'admin'] },
+        { name: dictionary.common.crisis, href: '/dashboard/crisis', icon: ShieldAlert, roles: ['student', 'admin'] },
+        { name: dictionary.common.wellbeing, href: '/dashboard/wellbeing', icon: HeartPulse, roles: ['student', 'admin'] },
     ];
 
     const links = allLinks.filter(link => link.roles.includes(userRole));
@@ -74,7 +77,7 @@ function SidebarContent({ userRole = 'student' }: { userRole?: string }) {
                 </div>
 
                 {/* Nav section label */}
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-600 px-2 mb-3">Navigation</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-600 px-2 mb-3">{dictionary.sidebar.navigation}</p>
 
                 <nav className="space-y-1.5">
                     {links.map((link) => {
@@ -114,7 +117,7 @@ function SidebarContent({ userRole = 'student' }: { userRole?: string }) {
                     className="flex items-center gap-4 px-5 py-4 w-full rounded-2xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 font-bold group"
                 >
                     <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm">Sign Out</span>
+                    <span className="text-sm">{dictionary.common.signout}</span>
                 </button>
             </div>
         </aside>

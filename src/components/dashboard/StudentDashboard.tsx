@@ -10,6 +10,8 @@ import { useSession } from 'next-auth/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -22,6 +24,7 @@ const PRIORITY_CONFIG = {
 
 export default function StudentDashboard() {
     const { data: session } = useSession();
+    const { dictionary } = useAccessibility();
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [dismissed, setDismissed] = useState<string[]>([]);
 
@@ -45,43 +48,43 @@ export default function StudentDashboard() {
 
     const modules = [
         {
-            title: 'Learning & AI',
-            desc: 'AI-powered summaries, text-to-speech, and accessibility tools.',
+            title: dictionary.common.learning,
+            desc: dictionary.dashboard.newFeatures,
             icon: Brain,
             href: '/dashboard/accessibility',
             color: 'indigo',
             accent: 'from-indigo-600 to-indigo-800',
             lightBg: 'bg-indigo-50',
             iconColor: 'text-indigo-600',
-            stat: 'New features available',
+            stat: dictionary.dashboard.newFeatures,
         },
         {
-            title: 'Crisis Intelligence',
-            desc: 'View safety reports and submit SOS alerts from campus.',
+            title: dictionary.common.crisis,
+            desc: dictionary.dashboard.realtimeUpdates,
             icon: ShieldAlert,
             href: '/dashboard/crisis',
             color: 'red',
             accent: 'from-red-500 to-rose-700',
             lightBg: 'bg-red-50',
             iconColor: 'text-red-600',
-            stat: 'Real-time updates',
+            stat: dictionary.dashboard.realtimeUpdates,
         },
         {
-            title: 'Wellbeing Assistant',
-            desc: 'Log your mood, get AI support, and track your mental health.',
+            title: dictionary.common.wellbeing,
+            desc: dictionary.dashboard.dailyCheckin,
             icon: HeartPulse,
             href: '/dashboard/wellbeing',
             color: 'emerald',
             accent: 'from-emerald-500 to-teal-700',
             lightBg: 'bg-emerald-50',
             iconColor: 'text-emerald-600',
-            stat: 'Daily check-in available',
+            stat: dictionary.dashboard.dailyCheckin,
         },
     ];
 
     const firstName = session?.user?.name?.split(' ')[0] || 'there';
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? '🌤 Good morning' : hour < 18 ? '☀️ Good afternoon' : '🌙 Good evening';
+    const greeting = dictionary.dashboard.greeting;
 
     return (
         <div className="max-w-6xl mx-auto space-y-10">
@@ -93,11 +96,11 @@ export default function StudentDashboard() {
                         {firstName}
                         <span className="text-slate-300">.</span>
                     </h2>
-                    <p className="text-slate-500 text-lg font-medium">How can <span className="text-indigo-600 font-bold">Access360</span> support you today?</p>
+                    <p className="text-slate-500 text-lg font-medium">{dictionary.dashboard.search}</p>
                 </div>
                 <div className="hidden md:flex items-center gap-3 bg-white border border-slate-100 rounded-3xl px-6 py-4 shadow-sm">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-sm font-bold text-slate-600">All systems online</span>
+                    <span className="text-sm font-bold text-slate-600">{dictionary.dashboard.allSystems}</span>
                 </div>
             </div>
 
@@ -180,7 +183,7 @@ export default function StudentDashboard() {
             {/* Quick Stats Row */}
             <div className="grid grid-cols-3 gap-6">
                 {[
-                    { label: 'Campus Alerts', value: '0', icon: ShieldAlert, color: 'text-red-500', bg: 'bg-red-50' },
+                    { label: dictionary.common.crisis, value: '0', icon: ShieldAlert, color: 'text-red-500', bg: 'bg-red-50' },
                     { label: 'AI Sessions', value: '12', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                     { label: 'Mood Streak', value: '7d', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 ].map((stat) => {
@@ -210,17 +213,17 @@ export default function StudentDashboard() {
                         Daily Inspiration
                     </div>
                     <h3 className="text-3xl font-bold font-outfit mb-4 leading-tight">
-                        "Accessibility is not a feature —<br /> it's a <span className="text-indigo-300">fundamental right</span>."
+                        {dictionary.dashboard.inspiration}
                     </h3>
                     <p className="text-indigo-200/80 text-base font-medium mb-8 leading-relaxed">
-                        Access360 is here to help you navigate campus life with confidence and ease.
+                        {dictionary.dashboard.inspirationSub}
                     </p>
                     <Link
                         href="/dashboard/wellbeing"
                         className="inline-flex items-center gap-3 bg-white text-indigo-900 px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-50 transition-all shadow-xl shadow-indigo-900/30 group"
                     >
                         <MessageSquare className="w-5 h-5" />
-                        Chat with Wellbeing AI
+                        {dictionary.dashboard.chatWellbeing}
                         <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>

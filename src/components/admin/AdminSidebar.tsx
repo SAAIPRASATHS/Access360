@@ -17,21 +17,24 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-const navLinks = [
-    { name: 'Overview', href: '/admin', icon: LayoutDashboard },
-    { name: 'Incident Reports', href: '/admin/incidents', icon: ShieldAlert },
-    { name: 'SOS Alerts', href: '/admin/sos', icon: Activity },
-    { name: 'Wellbeing', href: '/admin/wellbeing', icon: BarChart3 },
-    { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
-    { name: 'User Management', href: '/admin/users', icon: Users },
-];
-
 export default function AdminSidebar() {
     const pathname = usePathname();
+    const { dictionary } = useAccessibility();
+
+    const navLinks = [
+        { name: dictionary.common.overview, href: '/admin', icon: LayoutDashboard },
+        { name: dictionary.sidebar.incidents, href: '/admin/incidents', icon: ShieldAlert },
+        { name: dictionary.sidebar.sos, href: '/admin/sos', icon: Activity },
+        { name: dictionary.common.wellbeing, href: '/admin/wellbeing', icon: BarChart3 },
+        { name: dictionary.sidebar.announcements, href: '/admin/announcements', icon: Megaphone },
+        { name: dictionary.sidebar.users, href: '/admin/users', icon: Users },
+    ];
 
     return (
         <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
@@ -79,14 +82,14 @@ export default function AdminSidebar() {
                     className="flex items-center gap-4 px-5 py-4 rounded-2xl hover:bg-slate-800 transition-all text-slate-400 hover:text-white group mb-2"
                 >
                     <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                    <span className="font-bold text-sm">Exit to Student Portal</span>
+                    <span className="font-bold text-sm">{dictionary.sidebar.exitToStudent}</span>
                 </Link>
                 <button
                     onClick={() => signOut({ callbackUrl: '/' })}
                     className="flex items-center gap-4 px-5 py-4 w-full rounded-2xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 font-bold group"
                 >
                     <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm">Sign Out System</span>
+                    <span className="text-sm">{dictionary.common.signout}</span>
                 </button>
             </div>
         </aside>

@@ -1,0 +1,42 @@
+{
+    "common": {
+        "dashboard": "Dashboard",
+        "learning": "Learning & AI",
+        "crisis": "Crisis Intelligence",
+        "wellbeing": "Wellbeing",
+        "settings": "Settings",
+        "signout": "Sign Out",
+        "admin": "Admin",
+        "student": "Student",
+        "overview": "Overview"
+    },
+    "sidebar": {
+        "navigation": "Navigation",
+        "hub": "My Hub",
+        "adminHub": "System Hub",
+        "exitToStudent": "Exit to Student Portal",
+        "incidents": "Incident Reports",
+        "sos": "SOS Alerts",
+        "announcements": "Announcements",
+        "users": "User Management"
+    },
+    "dashboard": {
+        "greeting": "Good evening",
+        "search": "How can Access360 support you today?",
+        "allSystems": "All systems online",
+        "inspiration": "Accessibility is not a feature — it's a fundamental right.",
+        "inspirationSub": "Access360 is here to help you navigate campus life with confidence and ease.",
+        "chatWellbeing": "Chat with Wellbeing AI",
+        "newFeatures": "New features available",
+        "realtimeUpdates": "Real-time updates",
+        "dailyCheckin": "Daily check-in available"
+    },
+    "accessibility": {
+        "title": "Accessibility",
+        "highContrast": "High Contrast",
+        "fontSize": "FontSize",
+        "dyslexiaFont": "Dyslexia Font",
+        "focusMode": "Focus Mode",
+        "speech": "Speech (TTS)"
+    }
+}

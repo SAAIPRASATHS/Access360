@@ -3,13 +3,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
+import { getDictionary, Dictionary, Language } from '@/lib/i18n';
+
 interface AccessibilityContextType {
     fontSize: 'small' | 'medium' | 'large' | 'xl';
     highContrast: boolean;
     dyslexiaFont: boolean;
     focusMode: boolean;
     speechEnabled: boolean;
-    language: string;
+    language: Language;
+    dictionary: Dictionary;
     updatePreferences: (prefs: any) => void;
 }
 
@@ -86,8 +89,10 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
         }
     };
 
+    const dictionary = getDictionary(prefs.language as Language);
+
     return (
-        <AccessibilityContext.Provider value={{ ...prefs, updatePreferences }}>
+        <AccessibilityContext.Provider value={{ ...prefs, language: prefs.language as Language, dictionary, updatePreferences }}>
             {children}
         </AccessibilityContext.Provider>
     );
