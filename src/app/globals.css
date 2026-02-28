@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme {
+  --font-inter: var(--font-inter);
+  --font-outfit: var(--font-outfit);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* Accessibility Modes */
+.high-contrast {
+  --background: #000000 !important;
+  --foreground: #ffffff !important;
+  --brand: #ffff00 !important;
+  background-color: var(--background);
+}
+
+.high-contrast * {
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.high-contrast button,
+.high-contrast select,
+.high-contrast textarea,
+.high-contrast input {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border: 1px solid #ffffff !important;
+}
+
+.text-lg {
+  font-size: 1.25rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.dyslexia-mode {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+}
+
+/* Neurodiverse Focus Mode */
+.focus-mode .sidebar,
+.focus-mode .notifications {
+  display: none;
+}
