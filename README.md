@@ -15,10 +15,10 @@ JanAccess AI provides a unified dashboard that combines:
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js 16 (App Router), Tailwind CSS
 - **Backend**: Next.js API Routes (Node.js)
-- **Database**: MongoDB Atlas (Mongoose)
+- **Database**: Firebase (Firestore & Admin SDK)
 - **AI Engine**: Groq API (Llama 3 8B)
 - **Intelligence**: Leaflet.js (Maps), Recharts (Analytics)
-- **Auth**: NextAuth.js (Google Login)
+- **Auth**: NextAuth.js (Credentials Provider)
 
 ## 🌍 Social Impact
 JanAccess AI scales resilience by:
@@ -30,11 +30,11 @@ JanAccess AI scales resilience by:
 1. Clone the repository.
 2. Create a `.env.local` file with the following variables:
    ```env
-   MONGODB_URI=your_mongodb_uri
-   NEXTAUTH_SECRET=your_secret
-   GOOGLE_CLIENT_ID=your_google_id
-   GOOGLE_CLIENT_SECRET=your_google_secret
+   FIREBASE_PROJECT_ID=your_id
+   FIREBASE_CLIENT_EMAIL=your_email
+   FIREBASE_PRIVATE_KEY=your_key
    GROQ_API_KEY=your_groq_key
+   NEXTAUTH_SECRET=your_secret
    ```
 3. Run `npm install`.
 4. Run `npm run dev`.
@@ -42,8 +42,7 @@ JanAccess AI scales resilience by:
 ## 📜 Architecture
 - `src/app`: Page routes and API handlers.
 - `src/components`: Modular UI components (Accessibility, Crisis, Health).
-- `src/models`: Mongoose database schemas.
-- `src/lib`: Shared utilities for AI and Database.
+- `src/lib/firebase`: Firebase configuration and helpers.
 
 ---
 Built with ❤️ for a more resilient campus community.
