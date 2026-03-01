@@ -26,18 +26,23 @@ export default function SignIn() {
             });
 
             if (res?.error) {
+                console.error('[SignIn] NextAuth error:', res.error);
                 setError('Invalid email or password');
             } else {
+                console.log('[SignIn] Sign in successful, fetching session...');
                 // Get fresh session to read role
                 const session = await getSession();
                 const role = (session?.user as any)?.role;
+                console.log('[SignIn] User role:', role);
                 // Admins go directly to admin portal
                 router.push(role === 'admin' ? '/admin' : '/dashboard');
                 router.refresh();
             }
         } catch (err) {
+            console.error('[SignIn] Unexpected error during sign in:', err);
             setError('Something went wrong. Please try again.');
         } finally {
+
             setLoading(false);
         }
     };
@@ -60,6 +65,8 @@ export default function SignIn() {
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
+                                    id="email"
+                                    name="email"
                                     type="email"
                                     required
                                     value={email}
@@ -75,6 +82,8 @@ export default function SignIn() {
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
+                                    id="password"
+                                    name="password"
                                     type="password"
                                     required
                                     value={password}

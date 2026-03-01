@@ -12,28 +12,38 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log('[Auth] Authorizing user:', credentials?.email);
                 if (!credentials?.email || !credentials?.password) {
+                    console.warn('[Auth] Missing credentials');
                     throw new Error('Please enter an email and password');
                 }
 
-                const user = await userService.getUserByEmail(credentials.email);
+                try {
+                    const user = await userService.getUserByEmail(credentials.email);
 
-                if (!user || !user.password) {
-                    throw new Error('No user found with this email');
+                    if (!user || !user.password) {
+                        console.warn('[Auth] User not found or no password set:', credentials.email);
+                        throw new Error('No user found with this email');
+                    }
+
+                    const isPasswordMatch = await bcrypt.compare(credentials.password, user.password);
+
+                    if (!isPasswordMatch) {
+                        console.warn('[Auth] Password mismatch for:', credentials.email);
+                        throw new Error('Incorrect password');
+                    }
+
+                    console.log('[Auth] SUCCESS: User authorized:', credentials.email, 'Role:', user.role);
+                    return {
+                        id: user.id!,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                    };
+                } catch (error: any) {
+                    console.error('[Auth] Authorization error:', error.message);
+                    throw error;
                 }
-
-                const isPasswordMatch = await bcrypt.compare(credentials.password, user.password);
-
-                if (!isPasswordMatch) {
-                    throw new Error('Incorrect password');
-                }
-
-                return {
-                    id: user.id!,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                };
             }
         })
     ],
