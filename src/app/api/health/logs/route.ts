@@ -14,7 +14,8 @@ export async function POST(req: Request) {
 
         const log = await healthService.createLog({
             userId: (session.user as any).id,
-            moodScore,
+            type: 'mood',
+            value: String(moodScore),
             note,
         });
 
