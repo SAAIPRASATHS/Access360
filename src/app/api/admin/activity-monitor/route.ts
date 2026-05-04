@@ -1,6 +1,6 @@
-import dbConnect from '@/lib/mongodb';
-import Incident from '@/lib/models/Incident';
-import SOSAlert from '@/lib/models/SOSAlert';
+import { db } from '@/lib/db';
+import { incidents, sosAlerts } from '@/lib/db/schema';
+import { gte, count, sql } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -13,16 +13,17 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
-
-        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
         // Fetch recent incident counts
-        const todayIncidents = await Incident.countDocuments({ timestamp: { $gt: oneDayAgo } });
-        const todaySOS = await SOSAlert.countDocuments({ timestamp: { $gt: oneDayAgo } });
+        const [incidentCount] = await db.select({ value: count() }).from(incidents).where(gte(incidents.timestamp, oneDayAgo));
+        const [sosCount] = await db.select({ value: count() }).from(sosAlerts).where(gte(sosAlerts.timestamp, oneDayAgo));
 
-        const weeklyIncidents = await Incident.find({ timestamp: { $gt: oneWeekAgo } }).lean();
+        const weeklyIncidents = await db.select().from(incidents).where(gte(incidents.timestamp, oneWeekAgo));
+
+        const todayIncidents = incidentCount.value;
+        const todaySOS = sosCount.value;
 
         // Summarise incident types
         const incidentTypes: Record<string, number> = {};

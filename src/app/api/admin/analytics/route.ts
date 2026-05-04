@@ -1,16 +1,12 @@
-import dbConnect from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import Mood from '@/lib/models/Mood';
-import Incident from '@/lib/models/Incident';
-import SOSAlert from '@/lib/models/SOSAlert';
+import { db } from '@/lib/db';
+import { users, moods, incidents, sosAlerts } from '@/lib/db/schema';
+import { gte, count, desc, sql } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
     try {
-        await dbConnect();
-
         let moodTrends: any[] = [];
         let crisisFrequency: any[] = [];
         let recentUsers: any[] = [];
@@ -20,27 +16,32 @@ export async function GET(req: Request) {
         let activeCrises = 0;
 
         try {
-            const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            const sevenDaysAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000));
 
             // 1. Mood Trends
-            const moodDocs = await Mood.find({ timestamp: { $gte: sevenDaysAgo } }).lean();
+            const results = await db.select({
+                date: sql<string>`TO_CHAR(timestamp, 'YYYY-MM-DD')`,
+                avgMood: sql<number>`AVG(
+                    CASE 
+                        WHEN mood = 'happy' THEN 5 
+                        WHEN mood = 'neutral' THEN 3 
+                        WHEN mood = 'stressed' THEN 2 
+                        ELSE 1 
+                    END
+                )`
+            })
+            .from(moods)
+            .where(gte(moods.timestamp, sevenDaysAgo))
+            .groupBy(sql`TO_CHAR(timestamp, 'YYYY-MM-DD')`)
+            .orderBy(sql`TO_CHAR(timestamp, 'YYYY-MM-DD')`);
 
-            const moodStats: Record<string, { total: number, count: number }> = {};
-            moodDocs.forEach((data: any) => {
-                const date = new Date(data.timestamp).toISOString().split('T')[0];
-                const moodValue = data.mood === 'happy' ? 5 : data.mood === 'neutral' ? 3 : data.mood === 'stressed' ? 2 : 1;
-                if (!moodStats[date]) moodStats[date] = { total: 0, count: 0 };
-                moodStats[date].total += moodValue;
-                moodStats[date].count += 1;
-            });
-
-            moodTrends = Object.entries(moodStats).map(([date, stats]) => ({
-                _id: date,
-                avgMood: (stats.total / stats.count).toFixed(1)
-            })).sort((a, b) => a._id.localeCompare(b._id));
+            moodTrends = results.map(r => ({
+                _id: r.date,
+                avgMood: Number(r.avgMood).toFixed(1)
+            }));
 
             // 2. Incident Stats
-            const allIncidents = await Incident.find().lean();
+            const allIncidents = await db.select().from(incidents);
             totalReports = allIncidents.length;
 
             const incidentCounts: Record<string, number> = {};
@@ -51,41 +52,43 @@ export async function GET(req: Request) {
             crisisFrequency = Object.entries(incidentCounts).map(([k, v]) => ({ _id: k, count: v }));
 
             // 3. User Stats
-            totalUsers = await User.countDocuments();
+            const [userCount] = await db.select({ value: count() }).from(users);
+            totalUsers = userCount.value;
 
             // 4. Active SOS Alerts
-            activeCrises = await SOSAlert.countDocuments({ status: 'active' });
+            const [sosCount] = await db.select({ value: count() }).from(sosAlerts);
+            activeCrises = sosCount.value;
 
             // 5. Recent Users
-            const recentUserDocs = await User.find()
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .lean();
+            const recentUserDocs = await db.select()
+                .from(users)
+                .orderBy(desc(users.createdAt))
+                .limit(5);
 
             recentUsers = recentUserDocs.map((doc: any) => ({
-                id: doc._id.toString(),
+                id: doc.id,
                 name: doc.name,
                 email: doc.email,
                 role: doc.role,
-                createdAt: doc.createdAt
+                createdAt: doc.createdAt.getTime()
             }));
 
             // 6. Recent Incidents
-            const recentIncidentDocs = await Incident.find()
-                .sort({ timestamp: -1 })
-                .limit(5)
-                .lean();
+            const recentIncidentDocs = await db.select()
+                .from(incidents)
+                .orderBy(desc(incidents.timestamp))
+                .limit(5);
 
             recentIncidents = recentIncidentDocs.map((doc: any) => ({
-                id: doc._id.toString(),
+                id: doc.id,
                 description: doc.description,
                 severity: doc.severity,
                 status: doc.status,
-                timestamp: doc.timestamp
+                timestamp: doc.timestamp.getTime()
             }));
 
         } catch (dbError: any) {
-            console.error('MongoDB query error:', dbError?.message || dbError);
+            console.error('PostgreSQL query error:', dbError?.message || dbError);
             moodTrends = Array.from({ length: 7 }, (_, i) => ({
                 _id: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 avgMood: (Math.random() * 2 + 3).toFixed(1)

@@ -1,5 +1,4 @@
-import dbConnect from '@/lib/mongodb';
-import User from '@/lib/models/User';
+import { userService } from '@/lib/services/user';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -11,10 +10,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
-        const userDocs = await User.find().limit(100).lean();
-        const users = userDocs.map((doc: any) => ({ ...doc, id: doc._id.toString() }));
-
+        const users = await userService.getAllUsers();
         return NextResponse.json({ users });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,9 +24,8 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
         const { id, role } = await req.json();
-        await User.findByIdAndUpdate(id, { role });
+        await userService.updateUser(id, { role });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

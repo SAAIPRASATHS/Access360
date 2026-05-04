@@ -1,5 +1,4 @@
-import dbConnect from '@/lib/mongodb';
-import SOSAlert from '@/lib/models/SOSAlert';
+import { sosService } from '@/lib/services/sos';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -11,9 +10,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
         const { id } = await req.json();
-        await SOSAlert.findByIdAndUpdate(id, { status: 'handled' });
+        await sosService.updateStatus(id, 'handled');
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

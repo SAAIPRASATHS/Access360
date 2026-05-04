@@ -10,15 +10,17 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MONGODB_URI
-        sync: false          # Set manually in Render dashboard — your Atlas connection string
+      - key: DATABASE_URL
+        sync: false          # Your Neon connection string (postgresql://...)
       - key: NEXTAUTH_URL
-        sync: false          # Set to your Render URL e.g. https://access360.onrender.com
+        sync: false          # https://your-app.onrender.com
       - key: NEXTAUTH_SECRET
-        sync: false          # A long random secret string
+        sync: false          # Long random string
       - key: ADMIN_SECRET_CODE
-        sync: false          # The code users enter to register as admin
+        sync: false          # Registration code
       - key: GROQ_API_KEY
-        sync: false          # Your Groq API key from console.groq.com
+        sync: false          # Groq API key
+      - key: OPENAI_API_KEY
+        sync: false          # OpenAI API key
       - key: ADMIN_SETUP_SECRET
-        sync: false          # Optional — defaults to access360-admin-2024
+        sync: false          # Setup secret

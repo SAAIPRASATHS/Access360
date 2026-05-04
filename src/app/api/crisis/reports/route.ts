@@ -1,11 +1,9 @@
 import { incidentService } from '@/lib/services/incidents';
+import { userService } from '@/lib/services/user';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getChatCompletion } from '@/lib/ai';
-import dbConnect from '@/lib/mongodb';
-import User from '@/lib/models/User';
-import Incident from '@/lib/models/Incident';
 
 export async function POST(req: Request) {
     try {
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
 
         const aiSeverity = await getChatCompletion(priorityPrompt, {
             systemPrompt: "You are a crisis dispatcher. Categorize incidents strictly by urgency.",
-            provider: 'groq' // High speed is critical here
+            provider: 'groq'
         });
 
         const finalSeverity = (['low', 'medium', 'high', 'critical'].includes(aiSeverity.toLowerCase().trim()))
@@ -49,24 +47,10 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         const incidents = await incidentService.getAllIncidents(100);
-
-        // 🔍 ENRICHMENT: Fetch user profiles for all UIDs
-        await dbConnect();
-        const userIds = [...new Set(incidents.map((i: any) => i.userId))].filter(Boolean);
-        const userProfiles: Record<string, any> = {};
-
-        if (userIds.length > 0) {
-            const users = await User.find().lean();
-            users.forEach((doc: any) => {
-                userProfiles[doc._id.toString()] = {
-                    name: doc.name || doc.email?.split('@')[0] || 'Unknown User',
-                    email: doc.email || 'No email'
-                };
-            });
-        }
+        const userProfiles = await userService.getUserProfiles();
 
         const enrichedIncidents = incidents.map((incident: any) => ({
             ...incident,
@@ -76,8 +60,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ incidents: enrichedIncidents });
     } catch (error: any) {
-        console.error('[Reports GET] MongoDB error:', error?.message || error);
-        return NextResponse.json({ incidents: [], dbError: error?.message });
+        console.error('[Reports GET] error:', error?.message || error);
+        return NextResponse.json({ incidents: [], error: error?.message });
     }
 }
 
@@ -111,8 +95,7 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Incident ID is required' }, { status: 400 });
         }
 
-        await dbConnect();
-        await Incident.findByIdAndDelete(id);
+        await incidentService.deleteIncident(id);
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

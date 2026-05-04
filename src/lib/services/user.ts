@@ -1,5 +1,6 @@
-import dbConnect from '../mongodb';
-import User from '../models/User';
+import { db } from '../db';
+import { users } from '../db/schema';
+import { eq } from 'drizzle-orm';
 
 export interface UserPreferences {
     highContrast: boolean;
@@ -23,23 +24,60 @@ export interface UserDoc {
 
 export const userService = {
     async getUserByEmail(email: string): Promise<UserDoc | null> {
-        await dbConnect();
-        const user = await User.findOne({ email }).lean();
+        const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const user = result[0];
         if (!user) return null;
-        return { ...user, id: (user as any)._id.toString() } as UserDoc;
+        return { 
+            ...user, 
+            id: user.id,
+            createdAt: user.createdAt.getTime() 
+        } as UserDoc;
     },
 
     async createUser(userData: Omit<UserDoc, 'createdAt'>): Promise<UserDoc> {
-        await dbConnect();
-        const user = await User.create({
+        const result = await db.insert(users).values({
             ...userData,
-            createdAt: Date.now(),
-        });
-        return { ...user.toObject(), id: user._id.toString() } as UserDoc;
+            accessibilityPreferences: userData.accessibilityPreferences as any,
+        }).returning();
+        
+        const user = result[0];
+        return { 
+            ...user, 
+            id: user.id,
+            createdAt: user.createdAt.getTime() 
+        } as UserDoc;
     },
 
     async updateUser(id: string, updates: Partial<UserDoc>): Promise<void> {
-        await dbConnect();
-        await User.findByIdAndUpdate(id, updates);
+        await db.update(users)
+            .set(updates as any)
+            .where(eq(users.id, id as any));
+    },
+
+    async getAllUsers(): Promise<UserDoc[]> {
+        const result = await db.select().from(users).limit(100);
+        return result.map(user => ({ 
+            ...user, 
+            id: user.id,
+            createdAt: user.createdAt.getTime() 
+        })) as UserDoc[];
+    },
+
+    async deleteUser(id: string): Promise<void> {
+        await db.delete(users).where(eq(users.id, id as any));
+    },
+
+    async getUserProfiles(): Promise<Record<string, { name: string, email: string }>> {
+        const result = await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email
+        }).from(users);
+        
+        const profiles: Record<string, { name: string, email: string }> = {};
+        result.forEach(u => {
+            profiles[u.id] = { name: u.name, email: u.email };
+        });
+        return profiles;
     }
 };

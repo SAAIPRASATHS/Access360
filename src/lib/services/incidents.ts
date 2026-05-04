@@ -1,5 +1,6 @@
-import dbConnect from '../mongodb';
-import Incident from '../models/Incident';
+import { db } from '../db';
+import { incidents } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
 export interface IncidentDoc {
     id?: string;
@@ -18,27 +19,47 @@ export interface IncidentDoc {
 
 export const incidentService = {
     async createIncident(incident: Omit<IncidentDoc, 'timestamp' | 'status'>): Promise<IncidentDoc> {
-        await dbConnect();
-        const doc = await Incident.create({
-            ...incident,
+        const result = await db.insert(incidents).values({
+            userId: incident.userId as any,
+            type: incident.type as any,
+            description: incident.description,
+            lat: incident.location.lat,
+            lng: incident.location.lng,
+            severity: incident.severity as any,
             status: 'pending',
-            timestamp: Date.now(),
-        });
-        return { ...doc.toObject(), id: doc._id.toString() } as IncidentDoc;
+            imageUrl: incident.imageUrl,
+        }).returning();
+        
+        const doc = result[0];
+        return { 
+            ...doc, 
+            id: doc.id,
+            location: { lat: doc.lat, lng: doc.lng },
+            timestamp: doc.timestamp.getTime() 
+        } as unknown as IncidentDoc;
     },
 
     async getAllIncidents(limit: number = 50): Promise<IncidentDoc[]> {
-        await dbConnect();
-        const docs = await Incident.find()
-            .sort({ timestamp: -1 })
-            .limit(limit)
-            .lean();
+        const docs = await db.select()
+            .from(incidents)
+            .orderBy(desc(incidents.timestamp))
+            .limit(limit);
 
-        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as IncidentDoc);
+        return docs.map(d => ({ 
+            ...d, 
+            id: d.id,
+            location: { lat: d.lat, lng: d.lng },
+            timestamp: d.timestamp.getTime() 
+        }) as unknown as IncidentDoc);
     },
 
     async updateStatus(id: string, status: IncidentDoc['status']): Promise<void> {
-        await dbConnect();
-        await Incident.findByIdAndUpdate(id, { status });
+        await db.update(incidents)
+            .set({ status: status as any })
+            .where(eq(incidents.id, id as any));
+    },
+
+    async deleteIncident(id: string): Promise<void> {
+        await db.delete(incidents).where(eq(incidents.id, id as any));
     }
 };

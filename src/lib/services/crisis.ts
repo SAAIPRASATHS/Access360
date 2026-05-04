@@ -1,5 +1,6 @@
-import dbConnect from '../mongodb';
-import CrisisReport from '../models/CrisisReport';
+import { db } from '../db';
+import { crisisReports } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
 export interface CrisisReportDoc {
     id?: string;
@@ -17,22 +18,37 @@ export interface CrisisReportDoc {
 
 export const crisisService = {
     async createReport(report: Omit<CrisisReportDoc, 'timestamp' | 'verified'>): Promise<CrisisReportDoc> {
-        await dbConnect();
-        const doc = await CrisisReport.create({
-            ...report,
+        const result = await db.insert(crisisReports).values({
+            userId: report.userId as any,
+            lat: report.location.lat,
+            lng: report.location.lng,
+            description: report.description,
+            severity: report.severity as any,
             verified: false,
-            timestamp: Date.now(),
-        });
-        return { ...doc.toObject(), id: doc._id.toString() } as CrisisReportDoc;
+            photoUrl: report.photoUrl,
+        }).returning();
+        
+        const doc = result[0];
+        return { 
+            ...doc, 
+            id: doc.id,
+            location: { lat: doc.lat, lng: doc.lng },
+            timestamp: doc.timestamp.getTime() 
+        } as unknown as CrisisReportDoc;
     },
 
     async getVerifiedReports(limit: number = 50): Promise<CrisisReportDoc[]> {
-        await dbConnect();
-        const docs = await CrisisReport.find({ verified: true })
-            .sort({ timestamp: -1 })
-            .limit(limit)
-            .lean();
+        const docs = await db.select()
+            .from(crisisReports)
+            .where(eq(crisisReports.verified, true))
+            .orderBy(desc(crisisReports.timestamp))
+            .limit(limit);
 
-        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as CrisisReportDoc);
+        return docs.map(d => ({ 
+            ...d, 
+            id: d.id,
+            location: { lat: d.lat, lng: d.lng },
+            timestamp: d.timestamp.getTime() 
+        }) as unknown as CrisisReportDoc);
     }
 };

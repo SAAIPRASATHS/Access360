@@ -1,16 +1,10 @@
 import { sosService } from '@/lib/services/sos';
+import { userService } from '@/lib/services/user';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getChatCompletion } from '@/lib/ai';
-import dbConnect from '@/lib/mongodb';
-import SOSAlert from '@/lib/models/SOSAlert';
-import User from '@/lib/models/User';
 
-/** 
- * Compute an urgency score for SOS alert sorting.  
- * Score 1-10 based on time-of-day risk, repeat triggers, etc.
- */
 async function getSOSUrgencyScore(userId: string, location: any, existingAlerts: any[]): Promise<number> {
     const now = new Date();
     const hour = now.getHours();
@@ -36,7 +30,6 @@ async function getSOSUrgencyScore(userId: string, location: any, existingAlerts:
         const score = parseInt(result.trim(), 10);
         return isNaN(score) ? (isNighttime ? 8 : 6) : Math.max(1, Math.min(10, score));
     } catch {
-        // Fallback heuristic scoring
         let score = 5;
         if (isNighttime) score += 3;
         if (repeatCount > 1) score += 1;
@@ -53,10 +46,8 @@ export async function POST(req: Request) {
         }
 
         const { location } = await req.json();
-        // Use email as fallback userId if id isn't populated
         const userId = (session.user as any).id || session.user.email || 'unknown';
 
-        // Fetch existing active alerts to check for repeats
         let existingAlerts: any[] = [];
         try {
             existingAlerts = await sosService.getActiveAlerts();
@@ -65,13 +56,10 @@ export async function POST(req: Request) {
         }
 
         const urgencyScore = await getSOSUrgencyScore(userId, location, existingAlerts);
-
         const alert = await sosService.triggerSOS(userId, location);
 
-        // Store the urgency score alongside the alert
-        await dbConnect();
         if (alert?.id) {
-            await SOSAlert.findByIdAndUpdate(alert.id, { urgencyScore });
+            await sosService.updateUrgencyScore(alert.id, urgencyScore);
         }
 
         return NextResponse.json({ success: true, alert, urgencyScore });
@@ -83,29 +71,8 @@ export async function POST(req: Request) {
 
 export async function GET() {
     try {
-        await dbConnect();
-        // Fetch ALL alerts (active + handled)
-        const alertDocs = await SOSAlert.find()
-            .sort({ timestamp: -1 })
-            .limit(100)
-            .lean();
-
-        const alerts = alertDocs.map((doc: any) => ({ ...doc, id: doc._id.toString() }));
-
-        // 🔍 ENRICHMENT: Fetch user profiles for all UIDs
-        const userIds = [...new Set(alerts.map((a: any) => a.userId))].filter(Boolean);
-        const userProfiles: Record<string, any> = {};
-
-        if (userIds.length > 0) {
-            const users = await User.find().lean();
-            users.forEach((doc: any) => {
-                const docId = doc._id.toString();
-                userProfiles[docId] = {
-                    name: doc.name || doc.email?.split('@')[0] || 'Unknown User',
-                    email: doc.email || 'No email'
-                };
-            });
-        }
+        const alerts = await sosService.getAllAlerts();
+        const userProfiles = await userService.getUserProfiles();
 
         const enrichedAlerts = alerts.map((alert: any) => ({
             ...alert,
@@ -113,7 +80,6 @@ export async function GET() {
             userEmail: userProfiles[alert.userId]?.email || 'No email'
         }));
 
-        // Sort in-memory: urgency score descending, then timestamp descending
         const sorted = [...enrichedAlerts].sort((a: any, b: any) => {
             const urgencyDiff = (b.urgencyScore ?? 5) - (a.urgencyScore ?? 5);
             if (urgencyDiff !== 0) return urgencyDiff;
@@ -121,7 +87,7 @@ export async function GET() {
         });
         return NextResponse.json({ alerts: sorted });
     } catch (error: any) {
-        console.error('[SOS GET] MongoDB error:', error?.message || error);
-        return NextResponse.json({ alerts: [], dbError: error?.message });
+        console.error('[SOS GET] Error:', error?.message || error);
+        return NextResponse.json({ alerts: [], error: error?.message });
     }
 }

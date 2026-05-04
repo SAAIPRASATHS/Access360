@@ -1,5 +1,4 @@
-import dbConnect from '@/lib/mongodb';
-import User from '@/lib/models/User';
+import { userService } from '@/lib/services/user';
 import { NextResponse } from 'next/server';
 
 /**
@@ -25,20 +24,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });
         }
 
-        await dbConnect();
-
-        // Find user by email and promote to admin
-        const user = await User.findOneAndUpdate(
-            { email },
-            { role: 'admin' },
-            { new: true }
-        );
-
+        const user = await userService.getUserByEmail(email);
         if (!user) {
             return NextResponse.json({
                 error: `No user found with email: ${email}. Please sign up first, then run this endpoint.`
             }, { status: 404 });
         }
+
+        await userService.updateUser(user.id!, { role: 'admin' });
 
         console.log(`[AdminSetup] Promoted ${email} to admin role.`);
 

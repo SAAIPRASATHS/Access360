@@ -9,7 +9,8 @@ if (!process.env.MONGODB_URI) {
 
 async function seed() {
     try {
-        console.log('Connecting to local MongoDB...');
+        const isAtlas = MONGODB_URI.includes('mongodb+srv');
+        console.log(`Connecting to ${isAtlas ? 'MongoDB Atlas' : 'local MongoDB'}...`);
         await mongoose.connect(MONGODB_URI);
         console.log('Connected successfully.');
 

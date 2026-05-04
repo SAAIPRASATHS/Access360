@@ -1,5 +1,6 @@
-import dbConnect from '../mongodb';
-import Mood from '../models/Mood';
+import { db } from '../db';
+import { moods } from '../db/schema';
+import { desc, eq, gte, sql } from 'drizzle-orm';
 
 export interface MoodDoc {
     id?: string;
@@ -11,64 +12,56 @@ export interface MoodDoc {
 
 export const moodService = {
     async logMood(userId: string, mood: MoodDoc['mood'], note?: string): Promise<MoodDoc> {
-        await dbConnect();
-        const doc = await Mood.create({
-            userId,
-            mood,
+        const result = await db.insert(moods).values({
+            userId: userId as any,
+            mood: mood as any,
             note,
-            timestamp: Date.now(),
-        });
-        return { ...doc.toObject(), id: doc._id.toString() } as MoodDoc;
+        }).returning();
+        
+        const doc = result[0];
+        return { 
+            ...doc, 
+            id: doc.id,
+            timestamp: doc.timestamp.getTime() 
+        } as unknown as MoodDoc;
     },
 
     async getUserMoods(userId: string, limit: number = 7): Promise<MoodDoc[]> {
-        await dbConnect();
-        const docs = await Mood.find({ userId })
-            .sort({ timestamp: -1 })
-            .limit(limit)
-            .lean();
+        const docs = await db.select()
+            .from(moods)
+            .where(eq(moods.userId, userId as any))
+            .orderBy(desc(moods.timestamp))
+            .limit(limit);
 
-        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as MoodDoc);
+        return docs.map(d => ({ 
+            ...d, 
+            id: d.id,
+            timestamp: d.timestamp.getTime() 
+        }) as unknown as MoodDoc);
     },
 
     async getWeeklyStats(): Promise<any[]> {
-        await dbConnect();
-        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        const results = await Mood.aggregate([
-            { $match: { timestamp: { $gte: sevenDaysAgo } } },
-            {
-                $addFields: {
-                    date: {
-                        $dateToString: {
-                            format: '%Y-%m-%d',
-                            date: { $toDate: '$timestamp' },
-                        },
-                    },
-                    moodValue: {
-                        $switch: {
-                            branches: [
-                                { case: { $eq: ['$mood', 'happy'] }, then: 5 },
-                                { case: { $eq: ['$mood', 'neutral'] }, then: 3 },
-                                { case: { $eq: ['$mood', 'stressed'] }, then: 2 },
-                            ],
-                            default: 1,
-                        },
-                    },
-                },
-            },
-            {
-                $group: {
-                    _id: '$date',
-                    avgMood: { $avg: '$moodValue' },
-                },
-            },
-            { $sort: { _id: 1 } },
-        ]);
+        const results = await db.select({
+            date: sql<string>`TO_CHAR(timestamp, 'YYYY-MM-DD')`,
+            avgMood: sql<number>`AVG(
+                CASE 
+                    WHEN mood = 'happy' THEN 5 
+                    WHEN mood = 'neutral' THEN 3 
+                    WHEN mood = 'stressed' THEN 2 
+                    ELSE 1 
+                END
+            )`
+        })
+        .from(moods)
+        .where(gte(moods.timestamp, sevenDaysAgo))
+        .groupBy(sql`TO_CHAR(timestamp, 'YYYY-MM-DD')`)
+        .orderBy(sql`TO_CHAR(timestamp, 'YYYY-MM-DD')`);
 
         return results.map(r => ({
-            _id: r._id,
-            avgMood: r.avgMood.toFixed(1),
+            _id: r.date,
+            avgMood: Number(r.avgMood).toFixed(1),
         }));
     }
 };
