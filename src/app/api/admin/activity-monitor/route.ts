@@ -1,4 +1,6 @@
-import { db } from '@/lib/firebase';
+import dbConnect from '@/lib/mongodb';
+import Incident from '@/lib/models/Incident';
+import SOSAlert from '@/lib/models/SOSAlert';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -11,31 +13,23 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        await dbConnect();
+
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
         const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
         // Fetch recent incident counts
-        const incidentsSnap = await db.collection('incidents')
-            .where('timestamp', '>', oneDayAgo)
-            .get();
+        const todayIncidents = await Incident.countDocuments({ timestamp: { $gt: oneDayAgo } });
+        const todaySOS = await SOSAlert.countDocuments({ timestamp: { $gt: oneDayAgo } });
 
-        const sosSnap = await db.collection('sosAlerts')
-            .where('timestamp', '>', oneDayAgo)
-            .get();
-
-        const weeklyIncidentsSnap = await db.collection('incidents')
-            .where('timestamp', '>', oneWeekAgo)
-            .get();
+        const weeklyIncidents = await Incident.find({ timestamp: { $gt: oneWeekAgo } }).lean();
 
         // Summarise incident types
         const incidentTypes: Record<string, number> = {};
-        weeklyIncidentsSnap.docs.forEach(doc => {
-            const type = doc.data().type || 'Unknown';
+        weeklyIncidents.forEach((doc: any) => {
+            const type = doc.type || 'Unknown';
             incidentTypes[type] = (incidentTypes[type] || 0) + 1;
         });
-
-        const todayIncidents = incidentsSnap.size;
-        const todaySOS = sosSnap.size;
 
         const prompt = `
             Analyze the following recent campus activity data and identify any UNUSUAL patterns or anomalies.

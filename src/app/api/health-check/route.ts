@@ -1,16 +1,26 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { userService } from '@/lib/services/user';
+import mongoose from 'mongoose';
+import dbConnect from '@/lib/mongodb';
 
 export async function GET() {
     try {
-        console.log('[Health Check] Testing Firebase...');
-        const collections = await db.listCollections();
-        const testUser = await userService.getUserByEmail('test@test.com');
+        console.log('[Health Check] Testing MongoDB...');
+        await dbConnect();
+
+        const state = mongoose.connection.readyState;
+        // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+        const stateMap: Record<number, string> = {
+            0: 'disconnected',
+            1: 'connected',
+            2: 'connecting',
+            3: 'disconnecting',
+        };
+
+        const collections = await mongoose.connection.db!.listCollections().toArray();
 
         return NextResponse.json({
             status: 'ok',
-            firebase: 'connected',
+            mongodb: stateMap[state] || 'unknown',
             collections: collections.length,
             canQuery: true
         });

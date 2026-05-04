@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import Mood from '../models/Mood';
 
 export interface MoodDoc {
     id?: string;
@@ -8,51 +9,66 @@ export interface MoodDoc {
     timestamp: number;
 }
 
-const MOODS_COLLECTION = 'moods';
-
 export const moodService = {
     async logMood(userId: string, mood: MoodDoc['mood'], note?: string): Promise<MoodDoc> {
-        const docRef = await db.collection(MOODS_COLLECTION).add({
+        await dbConnect();
+        const doc = await Mood.create({
             userId,
             mood,
             note,
             timestamp: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as MoodDoc;
+        return { ...doc.toObject(), id: doc._id.toString() } as MoodDoc;
     },
 
     async getUserMoods(userId: string, limit: number = 7): Promise<MoodDoc[]> {
-        const snapshot = await db.collection(MOODS_COLLECTION)
-            .where('userId', '==', userId)
-            .orderBy('timestamp', 'desc')
+        await dbConnect();
+        const docs = await Mood.find({ userId })
+            .sort({ timestamp: -1 })
             .limit(limit)
-            .get();
+            .lean();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as MoodDoc);
+        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as MoodDoc);
     },
 
     async getWeeklyStats(): Promise<any[]> {
+        await dbConnect();
         const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        const snapshot = await db.collection(MOODS_COLLECTION)
-            .where('timestamp', '>=', sevenDaysAgo)
-            .get();
 
-        const stats: Record<string, { total: number, count: number }> = {};
+        const results = await Mood.aggregate([
+            { $match: { timestamp: { $gte: sevenDaysAgo } } },
+            {
+                $addFields: {
+                    date: {
+                        $dateToString: {
+                            format: '%Y-%m-%d',
+                            date: { $toDate: '$timestamp' },
+                        },
+                    },
+                    moodValue: {
+                        $switch: {
+                            branches: [
+                                { case: { $eq: ['$mood', 'happy'] }, then: 5 },
+                                { case: { $eq: ['$mood', 'neutral'] }, then: 3 },
+                                { case: { $eq: ['$mood', 'stressed'] }, then: 2 },
+                            ],
+                            default: 1,
+                        },
+                    },
+                },
+            },
+            {
+                $group: {
+                    _id: '$date',
+                    avgMood: { $avg: '$moodValue' },
+                },
+            },
+            { $sort: { _id: 1 } },
+        ]);
 
-        snapshot.docs.forEach(doc => {
-            const data = doc.data();
-            const date = new Date(data.timestamp).toISOString().split('T')[0];
-            const moodValue = data.mood === 'happy' ? 5 : data.mood === 'neutral' ? 3 : data.mood === 'stressed' ? 2 : 1;
-
-            if (!stats[date]) stats[date] = { total: 0, count: 0 };
-            stats[date].total += moodValue;
-            stats[date].count += 1;
-        });
-
-        return Object.entries(stats).map(([date, s]) => ({
-            _id: date,
-            avgMood: (s.total / s.count).toFixed(1)
-        })).sort((a, b) => a._id.localeCompare(b._id));
+        return results.map(r => ({
+            _id: r._id,
+            avgMood: r.avgMood.toFixed(1),
+        }));
     }
 };

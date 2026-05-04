@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import SOSAlert from '../models/SOSAlert';
 
 export interface SOSAlertDoc {
     id?: string;
@@ -8,30 +9,27 @@ export interface SOSAlertDoc {
         lng: number;
     };
     timestamp: number;
-    status: 'active' | 'responded';
+    status: 'active' | 'responded' | 'handled';
 }
-
-const SOS_COLLECTION = 'sosAlerts';
 
 export const sosService = {
     async triggerSOS(userId: string, location: SOSAlertDoc['location']): Promise<SOSAlertDoc> {
-        const docRef = await db.collection(SOS_COLLECTION).add({
+        await dbConnect();
+        const alert = await SOSAlert.create({
             userId,
             location,
             status: 'active',
             timestamp: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as SOSAlertDoc;
+        return { ...alert.toObject(), id: alert._id.toString() } as SOSAlertDoc;
     },
 
     async getActiveAlerts(): Promise<SOSAlertDoc[]> {
-        // No orderBy — avoids composite index requirement; sort in-memory
-        const snapshot = await db.collection(SOS_COLLECTION)
-            .where('status', '==', 'active')
-            .get();
+        await dbConnect();
+        const alerts = await SOSAlert.find({ status: 'active' })
+            .sort({ timestamp: -1 })
+            .lean();
 
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SOSAlertDoc);
-        return docs.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+        return alerts.map(a => ({ ...a, id: (a as any)._id.toString() }) as SOSAlertDoc);
     }
 };

@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import Incident from '../models/Incident';
 
 export interface IncidentDoc {
     id?: string;
@@ -15,30 +16,29 @@ export interface IncidentDoc {
     timestamp: number;
 }
 
-const INCIDENTS_COLLECTION = 'incidents';
-
 export const incidentService = {
     async createIncident(incident: Omit<IncidentDoc, 'timestamp' | 'status'>): Promise<IncidentDoc> {
-        const docRef = await db.collection(INCIDENTS_COLLECTION).add({
+        await dbConnect();
+        const doc = await Incident.create({
             ...incident,
             status: 'pending',
             timestamp: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as IncidentDoc;
+        return { ...doc.toObject(), id: doc._id.toString() } as IncidentDoc;
     },
 
     async getAllIncidents(limit: number = 50): Promise<IncidentDoc[]> {
-        // No orderBy — avoids composite index requirement; sort in-memory
-        const snapshot = await db.collection(INCIDENTS_COLLECTION)
+        await dbConnect();
+        const docs = await Incident.find()
+            .sort({ timestamp: -1 })
             .limit(limit)
-            .get();
+            .lean();
 
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as IncidentDoc);
-        return docs.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as IncidentDoc);
     },
 
     async updateStatus(id: string, status: IncidentDoc['status']): Promise<void> {
-        await db.collection(INCIDENTS_COLLECTION).doc(id).update({ status });
+        await dbConnect();
+        await Incident.findByIdAndUpdate(id, { status });
     }
 };

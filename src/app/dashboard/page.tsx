@@ -47,7 +47,7 @@ function DashboardPageContent() {
                     setData(d);
                     setAnalysis(a.analysis || '');
                 } catch (err) {
-                    console.error(err);
+                    console.warn('[Dashboard] Fetch analytics failed:', err);
                 } finally {
                     setLoading(false);
                 }

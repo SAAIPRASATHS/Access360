@@ -30,7 +30,7 @@ export default function UserManagementPage() {
             const data = await res.json();
             if (data.users) setUsers(data.users);
         } catch (err) {
-            console.error('Fetch Users Error:', err);
+            console.warn('[UserManagement] Fetch users failed:', err);
         } finally {
             setLoading(false);
         }
@@ -52,7 +52,7 @@ export default function UserManagementPage() {
             });
             if (res.ok) fetchUsers();
         } catch (err) {
-            console.error(err);
+            console.warn('[UserManagement] Toggle role failed:', err);
         }
     };
 

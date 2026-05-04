@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: access360
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health-check
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false          # Set manually in Render dashboard — your Atlas connection string
+      - key: NEXTAUTH_URL
+        sync: false          # Set to your Render URL e.g. https://access360.onrender.com
+      - key: NEXTAUTH_SECRET
+        sync: false          # A long random secret string
+      - key: ADMIN_SECRET_CODE
+        sync: false          # The code users enter to register as admin
+      - key: GROQ_API_KEY
+        sync: false          # Your Groq API key from console.groq.com
+      - key: ADMIN_SETUP_SECRET
+        sync: false          # Optional — defaults to access360-admin-2024

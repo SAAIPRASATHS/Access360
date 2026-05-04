@@ -35,7 +35,7 @@ export default function WellbeingCheckIn() {
             });
             if (res.ok) setSubmitted(true);
         } catch (err) {
-            console.error(err);
+            console.warn('[WellbeingCheckIn] Submit error:', err);
         } finally {
             setLoading(false);
         }

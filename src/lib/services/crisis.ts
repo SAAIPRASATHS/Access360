@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import CrisisReport from '../models/CrisisReport';
 
 export interface CrisisReportDoc {
     id?: string;
@@ -14,26 +15,24 @@ export interface CrisisReportDoc {
     timestamp: number;
 }
 
-const REPORTS_COLLECTION = 'crisis_reports';
-
 export const crisisService = {
     async createReport(report: Omit<CrisisReportDoc, 'timestamp' | 'verified'>): Promise<CrisisReportDoc> {
-        const docRef = await db.collection(REPORTS_COLLECTION).add({
+        await dbConnect();
+        const doc = await CrisisReport.create({
             ...report,
             verified: false,
             timestamp: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as CrisisReportDoc;
+        return { ...doc.toObject(), id: doc._id.toString() } as CrisisReportDoc;
     },
 
     async getVerifiedReports(limit: number = 50): Promise<CrisisReportDoc[]> {
-        const snapshot = await db.collection(REPORTS_COLLECTION)
-            .where('verified', '==', true)
-            .orderBy('timestamp', 'desc')
+        await dbConnect();
+        const docs = await CrisisReport.find({ verified: true })
+            .sort({ timestamp: -1 })
             .limit(limit)
-            .get();
+            .lean();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as CrisisReportDoc);
+        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as CrisisReportDoc);
     }
 };

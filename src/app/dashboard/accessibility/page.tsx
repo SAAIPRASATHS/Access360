@@ -45,7 +45,7 @@ export default function AccessibilityLearningPage() {
             const data = await res.json();
             setSummary(data.summary);
         } catch (err) {
-            console.error(err);
+            console.warn('[AccessibilityLearning] AI Summary failed:', err);
         } finally {
             setLoading(false);
         }
@@ -121,7 +121,7 @@ export default function AccessibilityLearningPage() {
             if (data.error) throw new Error(data.error);
             setSummary(data.summary);
         } catch (err: any) {
-            console.error(err);
+            console.warn('[AccessibilityLearning] PDF Processing failed:', err);
             alert(err.message || 'Failed to process PDF');
         } finally {
             setLoading(false);

@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getChatCompletion } from '@/lib/ai';
+import dbConnect from '@/lib/mongodb';
+import SOSAlert from '@/lib/models/SOSAlert';
+import User from '@/lib/models/User';
 
 /** 
  * Compute an urgency score for SOS alert sorting.  
@@ -50,7 +53,7 @@ export async function POST(req: Request) {
         }
 
         const { location } = await req.json();
-        // Use email as fallback userId if id isn't populated (e.g. Firebase creds issue)
+        // Use email as fallback userId if id isn't populated
         const userId = (session.user as any).id || session.user.email || 'unknown';
 
         // Fetch existing active alerts to check for repeats
@@ -66,9 +69,9 @@ export async function POST(req: Request) {
         const alert = await sosService.triggerSOS(userId, location);
 
         // Store the urgency score alongside the alert
-        const { db } = await import('@/lib/firebase');
+        await dbConnect();
         if (alert?.id) {
-            await db.collection('sosAlerts').doc(alert.id).update({ urgencyScore });
+            await SOSAlert.findByIdAndUpdate(alert.id, { urgencyScore });
         }
 
         return NextResponse.json({ success: true, alert, urgencyScore });
@@ -80,27 +83,26 @@ export async function POST(req: Request) {
 
 export async function GET() {
     try {
+        await dbConnect();
         // Fetch ALL alerts (active + handled)
-        const { db } = await import('@/lib/firebase');
-        const snapshot = await db.collection('sosAlerts')
+        const alertDocs = await SOSAlert.find()
+            .sort({ timestamp: -1 })
             .limit(100)
-            .get();
+            .lean();
 
-        const alerts = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        const alerts = alertDocs.map((doc: any) => ({ ...doc, id: doc._id.toString() }));
 
         // 🔍 ENRICHMENT: Fetch user profiles for all UIDs
         const userIds = [...new Set(alerts.map((a: any) => a.userId))].filter(Boolean);
         const userProfiles: Record<string, any> = {};
 
         if (userIds.length > 0) {
-            // Firestore 'in' query supports up to 30 elements, but we'll fetch individually or in chunks for reliability
-            // Given the small scale, we'll fetch the whole users collection or filter by keys
-            const usersSnap = await db.collection('users').get();
-            usersSnap.forEach(doc => {
-                const data = doc.data();
-                userProfiles[doc.id] = {
-                    name: data.name || data.email?.split('@')[0] || 'Unknown User',
-                    email: data.email || 'No email'
+            const users = await User.find().lean();
+            users.forEach((doc: any) => {
+                const docId = doc._id.toString();
+                userProfiles[docId] = {
+                    name: doc.name || doc.email?.split('@')[0] || 'Unknown User',
+                    email: doc.email || 'No email'
                 };
             });
         }
@@ -119,7 +121,7 @@ export async function GET() {
         });
         return NextResponse.json({ alerts: sorted });
     } catch (error: any) {
-        console.error('[SOS GET] Firestore error:', error?.message || error);
-        return NextResponse.json({ alerts: [], firebaseError: error?.message });
+        console.error('[SOS GET] MongoDB error:', error?.message || error);
+        return NextResponse.json({ alerts: [], dbError: error?.message });
     }
 }

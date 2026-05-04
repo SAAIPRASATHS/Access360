@@ -34,7 +34,7 @@ export default function StudentDashboard() {
             const data = await res.json();
             if (data.announcements) setAnnouncements(data.announcements);
         } catch (err) {
-            console.error('Fetch Announcements Error:', err);
+            console.warn('[StudentDashboard] Fetch Announcements error:', err);
         }
     };
 

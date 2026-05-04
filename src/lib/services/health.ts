@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import HealthLog from '../models/HealthLog';
 
 export interface HealthLogDoc {
     id?: string;
@@ -8,35 +9,33 @@ export interface HealthLogDoc {
     timestamp: number;
 }
 
-const HEALTH_LOGS_COLLECTION = 'health_logs';
-
 export const healthService = {
     async createLog(log: Omit<HealthLogDoc, 'timestamp'>): Promise<HealthLogDoc> {
-        const docRef = await db.collection(HEALTH_LOGS_COLLECTION).add({
+        await dbConnect();
+        const doc = await HealthLog.create({
             ...log,
             timestamp: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as HealthLogDoc;
+        return { ...doc.toObject(), id: doc._id.toString() } as HealthLogDoc;
     },
 
     async getUserLogs(userId: string, limit: number = 10): Promise<HealthLogDoc[]> {
-        const snapshot = await db.collection(HEALTH_LOGS_COLLECTION)
-            .where('userId', '==', userId)
-            .orderBy('timestamp', 'desc')
+        await dbConnect();
+        const docs = await HealthLog.find({ userId })
+            .sort({ timestamp: -1 })
             .limit(limit)
-            .get();
+            .lean();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as HealthLogDoc);
+        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as HealthLogDoc);
     },
 
     async getRecentLogs(days: number = 7): Promise<HealthLogDoc[]> {
+        await dbConnect();
         const startTime = Date.now() - (days * 24 * 60 * 60 * 1000);
-        const snapshot = await db.collection(HEALTH_LOGS_COLLECTION)
-            .where('timestamp', '>=', startTime)
-            .orderBy('timestamp', 'asc')
-            .get();
+        const docs = await HealthLog.find({ timestamp: { $gte: startTime } })
+            .sort({ timestamp: 1 })
+            .lean();
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as HealthLogDoc);
+        return docs.map(d => ({ ...d, id: (d as any)._id.toString() }) as HealthLogDoc);
     }
 };

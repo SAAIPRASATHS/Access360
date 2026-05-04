@@ -45,7 +45,7 @@ export default function CrisisMap() {
                 const data = await res.json();
                 setReports(data.incidents || []);
             } catch (err) {
-                console.error(err);
+                console.warn('[CrisisMap] Fetch reports failed:', err);
             } finally {
                 setLoading(false);
             }

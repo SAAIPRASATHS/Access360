@@ -86,7 +86,7 @@ export default function LearningBot() {
                 setMessages(updated);
             }
         } catch (err) {
-            console.error('Translation failed:', err);
+            console.warn('[LearningBot] Translation failed:', err);
         } finally {
             setLoading(false);
         }

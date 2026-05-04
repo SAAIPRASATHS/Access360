@@ -1,4 +1,5 @@
-import { db } from '@/lib/firebase';
+import dbConnect from '@/lib/mongodb';
+import User from '@/lib/models/User';
 import { NextResponse } from 'next/server';
 
 /**
@@ -24,17 +25,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });
         }
 
-        // Find user by email
-        const usersSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+        await dbConnect();
 
-        if (usersSnap.empty) {
+        // Find user by email and promote to admin
+        const user = await User.findOneAndUpdate(
+            { email },
+            { role: 'admin' },
+            { new: true }
+        );
+
+        if (!user) {
             return NextResponse.json({
                 error: `No user found with email: ${email}. Please sign up first, then run this endpoint.`
             }, { status: 404 });
         }
-
-        const userDoc = usersSnap.docs[0];
-        await userDoc.ref.update({ role: 'admin' });
 
         console.log(`[AdminSetup] Promoted ${email} to admin role.`);
 

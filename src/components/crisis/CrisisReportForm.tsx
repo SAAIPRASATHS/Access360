@@ -35,7 +35,7 @@ export default function CrisisReportForm() {
             });
             if (res.ok) setSubmitted(true);
         } catch (err) {
-            console.error(err);
+            console.warn('[CrisisReportForm] Submit error:', err);
         } finally {
             setLoading(false);
         }

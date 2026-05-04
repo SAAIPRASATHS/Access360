@@ -25,15 +25,15 @@ function UrgencyBar({ score }: { score: number }) {
 export default function SOSMonitoringPage() {
     const [alerts, setAlerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [firebaseError, setFirebaseError] = useState<string | null>(null);
+    const [dbError, setDbError] = useState<string | null>(null);
 
     const fetchAlerts = async () => {
         try {
             const res = await fetch('/api/crisis/sos');
             const data = await res.json();
             if (data.alerts) setAlerts(data.alerts);
-            if (data.firebaseError) setFirebaseError(data.firebaseError);
-            else setFirebaseError(null);
+            if (data.dbError) setDbError(data.dbError);
+            else setDbError(null);
         } catch (err) {
             console.error('Fetch SOS Alerts Error:', err);
         } finally {
@@ -68,12 +68,12 @@ export default function SOSMonitoringPage() {
 
     return (
         <div className="space-y-10">
-            {firebaseError && (
+            {dbError && (
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
                     <ShieldAlert className="w-6 h-6 text-red-500 mt-0.5 shrink-0" />
                     <div>
-                        <p className="font-bold text-red-700 text-sm">Firebase Credentials Expired</p>
-                        <p className="text-red-600 text-xs mt-1">The Firebase service account key has expired. Go to <strong>Firebase Console → Project Settings → Service Accounts → Generate new private key</strong>, then update <code className="bg-red-100 px-1 rounded">.env.local</code> and restart the server.</p>
+                        <p className="font-bold text-red-700 text-sm">Database Connection Error</p>
+                        <p className="text-red-600 text-xs mt-1">Could not connect to MongoDB. Please check your <code className="bg-red-100 px-1 rounded">MONGODB_URI</code> in <code className="bg-red-100 px-1 rounded">.env.local</code> and restart the server.</p>
                     </div>
                 </div>
             )}

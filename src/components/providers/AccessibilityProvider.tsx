@@ -84,7 +84,7 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
                     body: JSON.stringify(updated),
                 });
             } catch (err) {
-                console.error('Failed to persist preferences:', err);
+                console.warn('[AccessibilityProvider] Failed to persist preferences:', err);
             }
         }
     };

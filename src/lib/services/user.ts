@@ -1,4 +1,5 @@
-import { db } from '../firebase';
+import dbConnect from '../mongodb';
+import User from '../models/User';
 
 export interface UserPreferences {
     highContrast: boolean;
@@ -20,30 +21,25 @@ export interface UserDoc {
     createdAt: number;
 }
 
-const USERS_COLLECTION = 'users';
-
 export const userService = {
     async getUserByEmail(email: string): Promise<UserDoc | null> {
-        const snapshot = await db.collection(USERS_COLLECTION)
-            .where('email', '==', email)
-            .limit(1)
-            .get();
-
-        if (snapshot.empty) return null;
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as UserDoc;
+        await dbConnect();
+        const user = await User.findOne({ email }).lean();
+        if (!user) return null;
+        return { ...user, id: (user as any)._id.toString() } as UserDoc;
     },
 
     async createUser(userData: Omit<UserDoc, 'createdAt'>): Promise<UserDoc> {
-        const docRef = await db.collection(USERS_COLLECTION).add({
+        await dbConnect();
+        const user = await User.create({
             ...userData,
             createdAt: Date.now(),
         });
-        const doc = await docRef.get();
-        return { id: doc.id, ...doc.data() } as UserDoc;
+        return { ...user.toObject(), id: user._id.toString() } as UserDoc;
     },
 
     async updateUser(id: string, updates: Partial<UserDoc>): Promise<void> {
-        await db.collection(USERS_COLLECTION).doc(id).update(updates);
+        await dbConnect();
+        await User.findByIdAndUpdate(id, updates);
     }
 };

@@ -1,4 +1,5 @@
-import { db } from '@/lib/firebase';
+import dbConnect from '@/lib/mongodb';
+import User from '@/lib/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -10,8 +11,9 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const snapshot = await db.collection('users').limit(100).get();
-        const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        await dbConnect();
+        const userDocs = await User.find().limit(100).lean();
+        const users = userDocs.map((doc: any) => ({ ...doc, id: doc._id.toString() }));
 
         return NextResponse.json({ users });
     } catch (error: any) {
@@ -26,8 +28,9 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        await dbConnect();
         const { id, role } = await req.json();
-        await db.collection('users').doc(id).update({ role });
+        await User.findByIdAndUpdate(id, { role });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

@@ -1,10 +1,16 @@
-import { db } from '@/lib/firebase';
+import dbConnect from '@/lib/mongodb';
+import User from '@/lib/models/User';
+import Mood from '@/lib/models/Mood';
+import Incident from '@/lib/models/Incident';
+import SOSAlert from '@/lib/models/SOSAlert';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
     try {
+        await dbConnect();
+
         let moodTrends: any[] = [];
         let crisisFrequency: any[] = [];
         let recentUsers: any[] = [];
@@ -17,13 +23,10 @@ export async function GET(req: Request) {
             const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
             // 1. Mood Trends
-            const moodsSnapshot = await db.collection('moods')
-                .where('timestamp', '>=', sevenDaysAgo)
-                .get();
+            const moodDocs = await Mood.find({ timestamp: { $gte: sevenDaysAgo } }).lean();
 
             const moodStats: Record<string, { total: number, count: number }> = {};
-            moodsSnapshot.docs.forEach(doc => {
-                const data = doc.data();
+            moodDocs.forEach((data: any) => {
                 const date = new Date(data.timestamp).toISOString().split('T')[0];
                 const moodValue = data.mood === 'happy' ? 5 : data.mood === 'neutral' ? 3 : data.mood === 'stressed' ? 2 : 1;
                 if (!moodStats[date]) moodStats[date] = { total: 0, count: 0 };
@@ -37,58 +40,52 @@ export async function GET(req: Request) {
             })).sort((a, b) => a._id.localeCompare(b._id));
 
             // 2. Incident Stats
-            const incidentsSnapshot = await db.collection('incidents').get();
-            totalReports = incidentsSnapshot.size;
+            const allIncidents = await Incident.find().lean();
+            totalReports = allIncidents.length;
 
             const incidentCounts: Record<string, number> = {};
-            incidentsSnapshot.docs.forEach(doc => {
-                const sev = doc.data().severity;
+            allIncidents.forEach((doc: any) => {
+                const sev = doc.severity;
                 incidentCounts[sev] = (incidentCounts[sev] || 0) + 1;
             });
             crisisFrequency = Object.entries(incidentCounts).map(([k, v]) => ({ _id: k, count: v }));
 
             // 3. User Stats
-            const usersSnapshot = await db.collection('users').get();
-            totalUsers = usersSnapshot.size;
+            totalUsers = await User.countDocuments();
 
             // 4. Active SOS Alerts
-            const sosSnapshot = await db.collection('sosAlerts').where('status', '==', 'active').get();
-            activeCrises = sosSnapshot.size;
+            activeCrises = await SOSAlert.countDocuments({ status: 'active' });
 
             // 5. Recent Users
-            const recentUsersSnapshot = await db.collection('users')
-                .limit(20)
-                .get();
+            const recentUserDocs = await User.find()
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .lean();
 
-            recentUsers = recentUsersSnapshot.docs
-                .map(doc => ({
-                    id: doc.id,
-                    name: doc.data().name,
-                    email: doc.data().email,
-                    role: doc.data().role,
-                    createdAt: doc.data().createdAt
-                }))
-                .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
-                .slice(0, 5);
+            recentUsers = recentUserDocs.map((doc: any) => ({
+                id: doc._id.toString(),
+                name: doc.name,
+                email: doc.email,
+                role: doc.role,
+                createdAt: doc.createdAt
+            }));
 
             // 6. Recent Incidents
-            const recentIncidentsSnapshot = await db.collection('incidents')
-                .limit(20)
-                .get();
+            const recentIncidentDocs = await Incident.find()
+                .sort({ timestamp: -1 })
+                .limit(5)
+                .lean();
 
-            recentIncidents = recentIncidentsSnapshot.docs
-                .map(doc => ({
-                    id: doc.id,
-                    description: doc.data().description,
-                    severity: doc.data().severity,
-                    status: doc.data().status,
-                    timestamp: doc.data().timestamp
-                }))
-                .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
-                .slice(0, 5);
+            recentIncidents = recentIncidentDocs.map((doc: any) => ({
+                id: doc._id.toString(),
+                description: doc.description,
+                severity: doc.severity,
+                status: doc.status,
+                timestamp: doc.timestamp
+            }));
 
         } catch (dbError: any) {
-            console.error('Firebase query error (check for missing Firestore indexes):', dbError?.message || dbError);
+            console.error('MongoDB query error:', dbError?.message || dbError);
             moodTrends = Array.from({ length: 7 }, (_, i) => ({
                 _id: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 avgMood: (Math.random() * 2 + 3).toFixed(1)
@@ -124,7 +121,7 @@ export async function GET(req: Request) {
             totalUsers,
             totalReports,
             activeCrises,
-            activeSOS: activeCrises, // alias for admin dashboard compatibility
+            activeSOS: activeCrises,
         });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

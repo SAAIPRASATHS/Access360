@@ -4,7 +4,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldAlert, Mail, Lock, Loader2, Chrome } from 'lucide-react';
+import { ShieldAlert, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function SignIn() {
     const [email, setEmail] = useState('');
@@ -26,7 +26,7 @@ export default function SignIn() {
             });
 
             if (res?.error) {
-                console.error('[SignIn] NextAuth error:', res.error);
+                console.warn('[SignIn] NextAuth error:', res.error);
                 setError('Invalid email or password');
             } else {
                 console.log('[SignIn] Sign in successful, fetching session...');
@@ -107,24 +107,7 @@ export default function SignIn() {
                         </button>
                     </form>
 
-                    <div className="relative my-10">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-100"></div>
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white px-4 text-slate-400 font-bold tracking-widest">Or continue with</span>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => signIn('google', { callbackUrl: '/api/auth/role-redirect' })}
-                        className="w-full bg-white border border-slate-200 text-slate-600 font-bold py-4 rounded-2xl transition-all hover:bg-slate-50 active:scale-[0.98] flex items-center justify-center gap-3"
-                    >
-                        <Chrome className="w-5 h-5" />
-                        Google Account
-                    </button>
-
-                    <p className="text-center text-slate-500 text-sm mt-10 font-medium">
+                    <p className="text-center text-slate-500 text-sm mt-8 font-medium">
                         Don't have an account?{' '}
                         <Link href="/auth/signup" className="text-indigo-600 font-bold hover:underline">
                             Create Account

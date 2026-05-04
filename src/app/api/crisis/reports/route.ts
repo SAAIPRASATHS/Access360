@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getChatCompletion } from '@/lib/ai';
+import dbConnect from '@/lib/mongodb';
+import User from '@/lib/models/User';
+import Incident from '@/lib/models/Incident';
 
 export async function POST(req: Request) {
     try {
@@ -51,17 +54,16 @@ export async function GET(req: Request) {
         const incidents = await incidentService.getAllIncidents(100);
 
         // 🔍 ENRICHMENT: Fetch user profiles for all UIDs
-        const { db } = await import('@/lib/firebase');
+        await dbConnect();
         const userIds = [...new Set(incidents.map((i: any) => i.userId))].filter(Boolean);
         const userProfiles: Record<string, any> = {};
 
         if (userIds.length > 0) {
-            const usersSnap = await db.collection('users').get();
-            usersSnap.forEach(doc => {
-                const data = doc.data();
-                userProfiles[doc.id] = {
-                    name: data.name || data.email?.split('@')[0] || 'Unknown User',
-                    email: data.email || 'No email'
+            const users = await User.find().lean();
+            users.forEach((doc: any) => {
+                userProfiles[doc._id.toString()] = {
+                    name: doc.name || doc.email?.split('@')[0] || 'Unknown User',
+                    email: doc.email || 'No email'
                 };
             });
         }
@@ -74,8 +76,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ incidents: enrichedIncidents });
     } catch (error: any) {
-        console.error('[Reports GET] Firestore error:', error?.message || error);
-        return NextResponse.json({ incidents: [], firebaseError: error?.message });
+        console.error('[Reports GET] MongoDB error:', error?.message || error);
+        return NextResponse.json({ incidents: [], dbError: error?.message });
     }
 }
 
@@ -109,11 +111,8 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Incident ID is required' }, { status: 400 });
         }
 
-        // Ideally, we'd have a delete method in incidentService, 
-        // but we'll import db directly here if it doesn't exist,
-        // or let's assume `incidentService` doesn't have it yet and do it directly with db.
-        const { db } = await import('@/lib/firebase');
-        await db.collection('incidents').doc(id).delete();
+        await dbConnect();
+        await Incident.findByIdAndDelete(id);
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

@@ -40,7 +40,7 @@ export default function AdminOverview() {
                 setAnalysis(a.analysis || '');
                 setActivityMonitor(act);
             } catch (err) {
-                console.error(err);
+                console.warn('[AdminOverview] Fetch data failed:', err);
             } finally {
                 setLoading(false);
             }

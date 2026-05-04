@@ -41,7 +41,7 @@ export const authOptions: NextAuthOptions = {
                         role: user.role,
                     };
                 } catch (error: any) {
-                    console.error('[Auth] Authorization error:', error.message);
+                    console.warn('[Auth] Authorization error:', error.message);
                     throw error;
                 }
             }
@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
                         token.accessibilityPreferences = dbUser.accessibilityPreferences;
                     }
                 } catch (e) {
-                    console.error('[JWT callback] Firestore lookup failed:', e);
+                    console.error('[JWT callback] MongoDB lookup failed:', e);
                 }
             }
             return token;

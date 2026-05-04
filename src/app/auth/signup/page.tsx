@@ -33,11 +33,18 @@ export default function SignUp() {
                 setError(data.details || data.message || 'Something went wrong');
             } else {
                 // Auto login after signup
-                await signIn('credentials', {
+                const res2 = await signIn('credentials', {
                     email,
                     password,
-                    callbackUrl: '/dashboard',
+                    redirect: false,
                 });
+                if (res2?.ok) {
+                    const { getSession } = await import('next-auth/react');
+                    const session = await getSession();
+                    const role = (session?.user as any)?.role;
+                    router.push(role === 'admin' ? '/admin' : '/dashboard');
+                    router.refresh();
+                }
             }
         } catch (err) {
             setError('Failed to create account. Please try again.');
