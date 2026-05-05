@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
                         token.accessibilityPreferences = dbUser.accessibilityPreferences;
                     }
                 } catch (e) {
-                    console.error('[JWT callback] MongoDB lookup failed:', e);
+                    console.error('[JWT callback] Database lookup failed:', e);
                 }
             }
             return token;
