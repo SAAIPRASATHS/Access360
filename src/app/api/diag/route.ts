@@ -21,11 +21,14 @@ export async function GET() {
                 isMongo: mongoUri?.startsWith('mongodb') || false,
             },
             NODE_ENV: process.env.NODE_ENV,
+            VERCEL: !!process.env.VERCEL,
+            VERCEL_ENV: process.env.VERCEL_ENV || 'local',
         },
         checks: {
-            readyForPostgres: !!dbUrl && dbUrl.startsWith('postgres'),
+            readyForPostgres: !!dbUrl && (dbUrl.startsWith('postgres') || dbUrl.startsWith('postgresql')),
             hasConflict: !!dbUrl && !!mongoUri,
+            hasChannelBinding: dbUrl?.includes('channel_binding'),
         },
-        instructions: "If 'DATABASE_URL' is missing or doesn't start with 'postgres', check your Render environment variables."
+        instructions: "If 'DATABASE_URL' is missing, go to Vercel Dashboard > Settings > Environment Variables. Ensure 'channel_binding' is NOT in the connection string if you still see errors."
     });
 }
