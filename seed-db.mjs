@@ -1,45 +1,27 @@
-import mongoose from 'mongoose';
+import { db } from './src/lib/db.js';
+import { users } from './src/lib/db/schema.js';
+import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/janaccess';
-if (!process.env.MONGODB_URI) {
-    console.warn('[seed] WARNING: MONGODB_URI not set in environment, using localhost fallback.');
-    console.warn('[seed] For Atlas, run: $env:MONGODB_URI="mongodb+srv://..." ; node seed-db.mjs');
-}
 
 async function seed() {
     try {
-        const isAtlas = MONGODB_URI.includes('mongodb+srv');
-        console.log(`Connecting to ${isAtlas ? 'MongoDB Atlas' : 'local MongoDB'}...`);
-        await mongoose.connect(MONGODB_URI);
-        console.log('Connected successfully.');
-
-        // Define a simple User schema for seeding
-        const userSchema = new mongoose.Schema({
-            name: String,
-            email: String,
-            password: { type: String, required: false },
-            role: String,
-            accessibilityPreferences: Object,
-            createdAt: Number
-        });
-
-        const User = mongoose.models.User || mongoose.model('User', userSchema);
-
-        // Check if user already exists
+        console.log('Connecting to PostgreSQL (Neon) for seeding...');
+        
         const email = 's@gmail.com';
-        const existingUser = await User.findOne({ email });
+        const existingUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const existingUser = existingUsers[0];
+
+        const hashedPassword = await bcrypt.hash('saai2005', 12);
 
         if (existingUser) {
             console.log(`User ${email} already exists. Updating password...`);
-            const hashedPassword = await bcrypt.hash('saai2005', 12);
-            existingUser.password = hashedPassword;
-            await existingUser.save();
+            await db.update(users)
+                .set({ password: hashedPassword })
+                .where(eq(users.id, existingUser.id));
             console.log('User updated successfully.');
         } else {
             console.log(`Creating user ${email}...`);
-            const hashedPassword = await bcrypt.hash('saai2005', 12);
-            await User.create({
+            await db.insert(users).values({
                 name: 'Saai Prasath',
                 email: email,
                 password: hashedPassword,
@@ -52,11 +34,11 @@ async function seed() {
                     speechEnabled: false,
                     language: 'en',
                 },
-                createdAt: Date.now()
             });
             console.log('User created successfully.');
         }
 
+        console.log('Seeding completed successfully.');
         process.exit(0);
     } catch (error) {
         console.error('Seeding failed:', error);
