@@ -20,6 +20,20 @@ export async function POST(req: Request) {
         // Check if admin code is valid
         const isAdmin = adminCode === process.env.ADMIN_SECRET_CODE;
 
+        // Verify DB connectivity before proceeding
+        try {
+            const { db } = await import('@/lib/db');
+            const { sql } = await import('drizzle-orm');
+            await db.execute(sql`SELECT 1`);
+        } catch (dbErr: any) {
+            console.error('Database connection failed during registration:', dbErr.message);
+            return NextResponse.json({ 
+                message: 'Database authentication failed. Please check your connection string.',
+                details: dbErr.message,
+                code: 'DB_CONN_ERROR'
+            }, { status: 500 });
+        }
+
         const user = await userService.createUser({
             name,
             email,
@@ -39,7 +53,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error('Registration error:', error);
         return NextResponse.json({
-            message: 'Server error during registration',
+            message: 'An unexpected error occurred during registration',
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });

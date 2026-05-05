@@ -19,7 +19,6 @@
     "groq-sdk": "^0.37.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
-    "mongoose": "^9.2.3",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "openai": "^6.25.0",

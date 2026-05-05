@@ -73,7 +73,7 @@ export default function SOSMonitoringPage() {
                     <ShieldAlert className="w-6 h-6 text-red-500 mt-0.5 shrink-0" />
                     <div>
                         <p className="font-bold text-red-700 text-sm">Database Connection Error</p>
-                        <p className="text-red-600 text-xs mt-1">Could not connect to MongoDB. Please check your <code className="bg-red-100 px-1 rounded">MONGODB_URI</code> in <code className="bg-red-100 px-1 rounded">.env.local</code> and restart the server.</p>
+                        <p className="text-red-600 text-xs mt-1">Could not connect to PostgreSQL (Neon). Please check your <code className="bg-red-100 px-1 rounded">DATABASE_URL</code> in the environment variables and restart the server.</p>
                     </div>
                 </div>
             )}
